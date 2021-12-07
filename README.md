@@ -76,14 +76,18 @@ The XNA sound renderer is present in the svn source code. Not yet avaiable as st
 
 14/09/2012 SharpMod is still alive
 
- - A Major release will be coming soon, stay tuned
-
+- A Major release will be coming soon, stay tuned
 - Enjoy the new SharpMod Logo :)
+
+07/12/2021 After 9 Years ?
+
+- Reboot of source code into GitHub
+- Try to found last update on old hard drive not commited on CodePlex
 
 
 # Donate
 
-Perhaps later... :)
+Perhaps later... Be patient !!! :)
 
 
 
