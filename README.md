@@ -7,6 +7,7 @@ A Soundtracker Module music player in C# (100% Managed, without interops), At th
 
 ## SilverLight Screenshot :
 
+Not Avaiable... Silverlight Version will not be maintained.
 
 ## Winforms Screenshot :
 
