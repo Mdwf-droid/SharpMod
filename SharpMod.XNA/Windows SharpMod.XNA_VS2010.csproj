@@ -1,0 +1,250 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{EDEFDC62-4C48-4E66-8C60-810630E1C2BC}</ProjectGuid>
+    <ProjectTypeGuids>{6D335F3A-9D43-41b4-9D22-F6F17C4BE596};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>WindowsPhoneGameLibrary1</RootNamespace>
+    <AssemblyName>WindowsPhoneGameLibrary1</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <XnaFrameworkVersion>v4.0</XnaFrameworkVersion>
+    <XnaPlatform>Windows</XnaPlatform>
+    <XnaProfile>Reach</XnaProfile>
+    <XnaCrossPlatformGroupID>349d54d7-ebd5-48ac-a68d-db6ea66df5da</XnaCrossPlatformGroupID>
+    <XnaOutputType>Library</XnaOutputType>
+    <XnaRefreshLevel>1</XnaRefreshLevel>
+    <Thumbnail>GameThumbnail.png</Thumbnail>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <OutputPath>bin\x86\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoStdLib>true</NoStdLib>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <DefineConstants>TRACE;WINDOWS</DefineConstants>
+    <PlatformTarget>x86</PlatformTarget>
+    <XnaCompressContent>true</XnaCompressContent>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <OutputPath>bin\x86\Debug</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoStdLib>true</NoStdLib>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE;WINDOWS</DefineConstants>
+    <PlatformTarget>x86</PlatformTarget>
+    <XnaCompressContent>false</XnaCompressContent>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="GameThumbnail.png">
+      <XnaPlatformSpecific>true</XnaPlatformSpecific>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\SharpMod.Core\DSP\AudioProcessor.cs">
+      <Link>DSP\AudioProcessor.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\DSP\FFT.cs">
+      <Link>DSP\FFT.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Exceptions\SharpModException.cs">
+      <Link>Exceptions\SharpModException.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Exceptions\SharpModExceptionResources.Designer.cs">
+      <Link>Exceptions\SharpModExceptionResources.Designer.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\IO\ModBinaryReader.cs">
+      <Link>IO\ModBinaryReader.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Loaders\MODLoader.cs">
+      <Link>Loaders\MODLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Loaders\S3MLoader.cs">
+      <Link>Loaders\S3MLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Loaders\XMLoader.cs">
+      <Link>Loaders\XMLoader.cs</Link>
+    </Compile>
+	<Compile Include="..\SharpMod.Core\Loaders\M15Loader.cs">
+      <Link>Loaders\M15Loader.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Mixer\ChannelInfo.cs">
+      <Link>Mixer\ChannelInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Mixer\ChannelsMixer.cs">
+      <Link>Mixer\ChannelsMixer.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Player\ActionsEnum.cs">
+      <Link>Player\ActionsEnum.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Player\ChannelMemory.cs">
+      <Link>Player\ChannelMemory.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Player\EnvelopeFlags.cs">
+      <Link>Player\EnvelopeFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Player\EnvPr.cs">
+      <Link>Player\EnvPr.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Player\EnvPt.cs">
+      <Link>Player\EnvPt.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Player\MixConfig.cs">
+      <Link>Player\MixConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Player\Player.cs">
+      <Link>Player\Player.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Song\Instrument.cs">
+      <Link>Song\Instrument.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Song\Module.cs">
+      <Link>Song\Module.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Song\Pattern.cs">
+      <Link>Song\Pattern.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Song\PatternCell.cs">
+      <Link>Song\PatternCell.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Song\Sample.cs">
+      <Link>Song\Sample.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Song\Track.cs">
+      <Link>Song\Track.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Song\UniTrkHelper.cs">
+      <Link>Song\UniTrkHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\SoundRenderer\WaveExporter.cs">
+      <Link>SoundRenderer\WaveExporter.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\UniTracker\Effects.cs">
+      <Link>UniTracker\Effects.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\UniTracker\UniMod.cs">
+      <Link>UniTracker\UniMod.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\UniTracker\UniModFlags.cs">
+      <Link>UniTracker\UniModFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\UniTracker\UniTrk.cs">
+      <Link>UniTracker\UniTrk.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Helper.cs">
+      <Link>Helper.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\ILoader.cs">
+      <Link>ILoader.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\IRenderer.cs">
+      <Link>IRenderer.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\ModuleLoader.cs">
+      <Link>ModuleLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\ModulePlayer.cs">
+      <Link>ModulePlayer.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\SampleFormatFlags.cs">
+      <Link>SampleFormatFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\SampleLoader.cs">
+      <Link>SampleLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\SharpModEventArgs.cs">
+      <Link>SharpModEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\WaveTable.cs">
+      <Link>WaveTable.cs</Link>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SoundRenderer\XnaSoundRenderer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.0,Profile=Client">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4 Client Profile %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Xna.Framework.4.0">
+      <Visible>False</Visible>
+      <ProductName>Microsoft XNA Framework Redistributable 4.0</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\SharpMod.Core\Exceptions\SharpModExceptionResources.resx">
+      <Link>Exceptions\SharpModExceptionResources.resx</Link>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Xna.Framework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" />
+    <Reference Include="Microsoft.Xna.Framework.Game, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" />
+    <Reference Include="Microsoft.Xna.Framework.GamerServices, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" />
+    <Reference Include="Microsoft.Xna.Framework.Graphics, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" />
+    <Reference Include="Microsoft.Xna.Framework.Input.Touch, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" />
+    <Reference Include="mscorlib" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Visualizer\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\XNA Game Studio\Microsoft.Xna.GameStudio.targets" />
+  <!--
+      To modify your build process, add your task inside one of the targets below and uncomment it. 
+      Other similar extension points exist, see Microsoft.Common.targets.
+      <Target Name="BeforeBuild">
+      </Target>
+      <Target Name="AfterBuild">
+      </Target>
+    -->
+</Project>

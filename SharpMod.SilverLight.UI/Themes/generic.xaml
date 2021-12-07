@@ -1,0 +1,20 @@
+﻿<ResourceDictionary xmlns:dataInput="clr-namespace:System.Windows.Controls;assembly=System.Windows.Controls.Data.Input" 
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:SharpMod.SilverLight.UI;assembly=SharpMod.SilverLight.UI">
+
+    <Style TargetType="local:LedPresenter">
+        <Setter Property="Template">
+            <Setter.Value>
+                <!-- ControlTemplate -->
+                <ControlTemplate TargetType="local:LedPresenter">
+                    <!-- Template's Root Visual -->
+                    <Grid Background="{TemplateBinding Background}" Margin="0" Width="auto" Height="auto">                        
+                        <TextBlock x:Name="lblPresenterBack" Foreground="#FF303030"  Grid.Row="0" Grid.Column="0"  FontFamily="/SharpMod.SilverLight.UI;Component/Fonts/TRANGA__.TTF#Transponder Grid AOE" FontSize="{TemplateBinding FontSize}" Text="{TemplateBinding MaskValue}" TextWrapping="Wrap" ></TextBlock>
+                        <TextBlock x:Name="lblPresenter" Foreground="{TemplateBinding Foreground}"  Grid.Row="0" Grid.Column="0" FontFamily="/SharpMod.SilverLight.UI;Component/Fonts/TRANA___.TTF#Transponder AOE" FontSize="{TemplateBinding FontSize}" Text="{TemplateBinding Value}" TextWrapping="Wrap" ></TextBlock>                        
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

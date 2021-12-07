@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project DefaultTargets="All"
+        xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <UsingTask AssemblyFile="SharpMod.Setup.Utils.dll" TaskName="PostSetupModifyProject"/>
+  <UsingTask AssemblyFile="SharpMod.Setup.Utils.dll" TaskName="PostSetupSolutionGenerator"/>
+  <UsingTask AssemblyFile="SharpMod.Setup.Utils.dll" TaskName="PostSetupBatchCopy"/>
+
+  <Target Name="RunModifySilverLight">
+    <PostSetupModifyProject FileName="..\..\SharpMod.Setup\Version\SilverLight\SourceCode\SharpMod.SilverLight\SharpMod.SilverLight.csproj" />
+  </Target>
+  <Target Name="RunModifyWindows">
+    <PostSetupModifyProject FileName="..\..\SharpMod.Setup\Version\Windows\SourceCode\SharpMod.Win\SharpMod.Win.csproj" />
+  </Target>
+  <Target Name="RunCreateSilverLightSolution">
+    <PostSetupSolutionGenerator ProjectRoot="..\..\SharpMod.Setup\Version\SilverLight\SourceCode\" SolutionFile=".\SilverLight\SourceCode\SharpMod.SilverLight.sln" />
+  </Target>
+  <Target Name="RunCreateWindowsSolution">
+    <PostSetupSolutionGenerator ProjectRoot="..\..\SharpMod.Setup\Version\Windows\SourceCode\" SolutionFile=".\Windows\SourceCode\SharpMod.Windows.sln" />
+  </Target>
+  <Target Name="RunBatchCopySLUI">
+    <PostSetupBatchCopy
+      ProjectBaseDirectory="..\..\SharpMod.SilverLight.UI"
+      ProjectDestFilename="..\..\SharpMod.Setup\Version\SilverLight\SourceCode\SharpMod.SilverLight.UI\SharpMod.SilverLight.UI.csproj"
+      Extensions=".xaml;.ttf;.xml;"/>
+  </Target>
+  <Target Name="RunBatchCopySLDemo">
+    <PostSetupBatchCopy
+      ProjectBaseDirectory="..\..\SharpMod.SilverLight.Demo"
+      ProjectDestFilename="..\..\SharpMod.Setup\Version\SilverLight\SourceCode\SharpMod.SilverLight.Demo\SharpMod.SilverLight.Demo.csproj"
+      Extensions=".xaml;.ttf;.xml;"/>
+  </Target> 
+</Project>

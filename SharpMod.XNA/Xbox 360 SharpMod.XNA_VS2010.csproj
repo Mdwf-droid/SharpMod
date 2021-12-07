@@ -1,0 +1,207 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{2E888744-AE47-4A9C-89E5-43D237DF3D45}</ProjectGuid>
+    <ProjectTypeGuids>{6D335F3A-9D43-41b4-9D22-F6F17C4BE596};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">Xbox 360</Platform>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>WindowsPhoneGameLibrary1</RootNamespace>
+    <AssemblyName>WindowsPhoneGameLibrary1</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <XnaFrameworkVersion>v4.0</XnaFrameworkVersion>
+    <XnaPlatform>Xbox 360</XnaPlatform>
+    <XnaProfile>HiDef</XnaProfile>
+    <XnaCrossPlatformGroupID>349d54d7-ebd5-48ac-a68d-db6ea66df5da</XnaCrossPlatformGroupID>
+    <XnaOutputType>Library</XnaOutputType>
+    <XnaRefreshLevel>1</XnaRefreshLevel>
+    <Thumbnail>GameThumbnail.png</Thumbnail>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|Xbox 360' ">
+    <OutputPath>bin\Xbox 360\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoStdLib>true</NoStdLib>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <DefineConstants>TRACE;XBOX;XBOX360</DefineConstants>
+    <XnaCompressContent>true</XnaCompressContent>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|Xbox 360' ">
+    <OutputPath>bin\Xbox 360\Debug</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoStdLib>true</NoStdLib>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE;XBOX;XBOX360</DefineConstants>
+    <XnaCompressContent>true</XnaCompressContent>
+    <DocumentationFile>bin\Xbox 360\Debug\WindowsPhoneGameLibrary1.XML</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="GameThumbnail.png">
+      <XnaPlatformSpecific>true</XnaPlatformSpecific>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\SharpMod.Core\DSP\AudioProcessor.cs">
+      <Link>DSP\AudioProcessor.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\DSP\FFT.cs">
+      <Link>DSP\FFT.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Exceptions\SharpModException.cs">
+      <Link>Exceptions\SharpModException.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Exceptions\SharpModExceptionResources.Designer.cs">
+      <Link>Exceptions\SharpModExceptionResources.Designer.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\IO\ModBinaryReader.cs">
+      <Link>IO\ModBinaryReader.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Loaders\MODLoader.cs">
+      <Link>Loaders\MODLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Loaders\S3MLoader.cs">
+      <Link>Loaders\S3MLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Loaders\XMLoader.cs">
+      <Link>Loaders\XMLoader.cs</Link>
+    </Compile>
+	<Compile Include="..\SharpMod.Core\Loaders\M15Loader.cs">
+      <Link>Loaders\M15Loader.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Mixer\ChannelInfo.cs">
+      <Link>Mixer\ChannelInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Mixer\ChannelsMixer.cs">
+      <Link>Mixer\ChannelsMixer.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Player\ActionsEnum.cs">
+      <Link>Player\ActionsEnum.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Player\ChannelMemory.cs">
+      <Link>Player\ChannelMemory.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Player\EnvelopeFlags.cs">
+      <Link>Player\EnvelopeFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Player\EnvPr.cs">
+      <Link>Player\EnvPr.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Player\EnvPt.cs">
+      <Link>Player\EnvPt.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Player\MixConfig.cs">
+      <Link>Player\MixConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Player\Player.cs">
+      <Link>Player\Player.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Song\Instrument.cs">
+      <Link>Song\Instrument.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Song\Module.cs">
+      <Link>Song\Module.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Song\Pattern.cs">
+      <Link>Song\Pattern.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Song\PatternCell.cs">
+      <Link>Song\PatternCell.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Song\Sample.cs">
+      <Link>Song\Sample.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Song\Track.cs">
+      <Link>Song\Track.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Song\UniTrkHelper.cs">
+      <Link>Song\UniTrkHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\SoundRenderer\WaveExporter.cs">
+      <Link>SoundRenderer\WaveExporter.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\UniTracker\Effects.cs">
+      <Link>UniTracker\Effects.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\UniTracker\UniMod.cs">
+      <Link>UniTracker\UniMod.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\UniTracker\UniModFlags.cs">
+      <Link>UniTracker\UniModFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\UniTracker\UniTrk.cs">
+      <Link>UniTracker\UniTrk.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\Helper.cs">
+      <Link>Helper.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\ILoader.cs">
+      <Link>ILoader.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\IRenderer.cs">
+      <Link>IRenderer.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\ModuleLoader.cs">
+      <Link>ModuleLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\ModulePlayer.cs">
+      <Link>ModulePlayer.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\SampleFormatFlags.cs">
+      <Link>SampleFormatFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\SampleLoader.cs">
+      <Link>SampleLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\SharpModEventArgs.cs">
+      <Link>SharpModEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\SharpMod.Core\WaveTable.cs">
+      <Link>WaveTable.cs</Link>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SoundRenderer\XnaSoundRenderer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Visualizer\" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\SharpMod.Core\Exceptions\SharpModExceptionResources.resx">
+      <Link>Exceptions\SharpModExceptionResources.resx</Link>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Xna.Framework" />
+    <Reference Include="Microsoft.Xna.Framework.Game" />
+    <Reference Include="Microsoft.Xna.Framework.GamerServices" />
+    <Reference Include="Microsoft.Xna.Framework.Graphics" />
+    <Reference Include="Microsoft.Xna.Framework.Input.Touch" />
+    <Reference Include="mscorlib" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\XNA Game Studio\Microsoft.Xna.GameStudio.targets" />
+  <!--
+      To modify your build process, add your task inside one of the targets below and uncomment it. 
+      Other similar extension points exist, see Microsoft.Common.targets.
+      <Target Name="BeforeBuild">
+      </Target>
+      <Target Name="AfterBuild">
+      </Target>
+    -->
+</Project>
