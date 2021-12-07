@@ -11,9 +11,11 @@ Not Avaiable... Silverlight Version will not be maintained.
 
 ## Winforms Screenshot :
 
+![alt text](https://github.com/Mdwf-droid/SharpMod/blob/master/SharpMod.Images/WinformDemo.png?raw=true)
 
 ## Command line, with track view and position
 
+![alt text](https://github.com/Mdwf-droid/SharpMod/blob/master/SharpMod.Images/ConsoleDemo.png?raw=true)
 
 # Project's Goal
 
@@ -81,23 +83,14 @@ The XNA sound renderer is present in the svn source code. Not yet avaiable as st
 
 # Donate
 
-SharpMod is a free open source project that is developed in personal time. You can show your appreciation for SharpMod and support future development by donating.
-
-(See codeplex page for donate link)
+Perhaps later... :)
 
 
 
-
-
- 
-
-
-
-
-
-Future
+# Future
+- Maintain this piece of code ?
 - try to solve bugs
-- make a Mono sound renderer (Have some ideas with PortAudio)
-- Test and adapt for Moonlight
+- make a Mono sound renderer (Have some ideas with PortAudio)... perhaps with .NET Core...
+- port to .NET Core
 
 Have fun !
