@@ -1,8 +1,10 @@
-﻿namespace SharpMod
+﻿using System;
+
+namespace SharpMod
 {
     ///<summary>
     ///</summary>
-    public interface IRenderer
+    public interface IRenderer : IDisposable
     {
         ///<summary>
         ///</summary>
@@ -16,6 +18,6 @@
         ///<summary>
         ///</summary>
         ModulePlayer Player { get; set; }
-        
+
     }
 }

@@ -1,9 +1,11 @@
 ﻿using NAudio.CoreAudioApi;
 using NAudio.Wave;
+using System;
+
 
 namespace SharpMod.SoundRenderer
 {
-    public class NAudioWaveChannelDriver : IRenderer
+    public class NAudioWaveChannelDriver(NAudioWaveChannelDriver.Output output) : IRenderer
     {
         public enum Output
         {
@@ -13,15 +15,11 @@ namespace SharpMod.SoundRenderer
             Asio
         }
 
-        //private ChannelsMixer _virtch;
         public ModulePlayer Player { get; set; }
-        private Output _output;
-        internal sbyte[] buf;
+        private readonly Output _output = output;        
 
         NAudioTrackerStream _naudioTrackerStream;
         IWavePlayer waveOut;
-        
-        WaveChannel32 _volumeStream;
 
         // NAudio setup variables
         /// <summary>
@@ -37,68 +35,61 @@ namespace SharpMod.SoundRenderer
         /// Desired Latency, used for Wavout, DirectSound and Wasapi
         /// by default, value is 250ms
         /// </summary>
-        public int Latency { get; set; }
-
-        public NAudioWaveChannelDriver(Output output)
-        {
-            _output = output;
-            Latency = 250;  
-        }
+        public int Latency { get; set; } = 250;
 
         public void Init()
         {
             CreateWaveOut();
-            //return 1;
         }
 
         private void CreateWaveOut()
         {
-            //CloseWaveOut();
-           
+
             switch (_output)
             {
                 case Output.WaveOut:
-                    var callbackInfo = WaveCallbackInfo.FunctionCallback();
-                    var outputDevice= new WaveOut(callbackInfo) {DesiredLatency = Latency};
-                    waveOut = outputDevice;                    
-                    break;
+
+                    /* var callbackInfo = WaveCallbackInfo.FunctionCallback()
+                     var outputDevice= new WaveOut(callbackInfo) {DesiredLatency = Latency}
+                     waveOut = outputDevice                    */
+                    throw new NotImplementedException();
+                    
                 case Output.DirectSound:
                     waveOut = new DirectSoundOut(Latency);
-                    
                     break;
                 case Output.Wasapi:
-                    waveOut = new WasapiOut(WasapiExclusiveMode?AudioClientShareMode.Exclusive:AudioClientShareMode.Shared,Latency);
+                    waveOut = new WasapiOut(WasapiExclusiveMode ? AudioClientShareMode.Exclusive : AudioClientShareMode.Shared, Latency);
                     break;
                 case Output.Asio:
-                    waveOut = new AsioOut(AsioDriverName);                    
+                    waveOut = new AsioOut(AsioDriverName);
                     break;
             }
-           
+
         }
 
         private void CloseWaveOut()
         {
-            if (waveOut != null)
-            {
-               // waveOut.Stop();
-            }
-            if (_naudioTrackerStream != null)
-            {
-                // this one really closes the file and ACM conversion
-                //volumeStream.Close();
-                //volumeStream = null;
-                // this one does the metering stream
-                _naudioTrackerStream.Close();
-                _naudioTrackerStream = null;
-            }
-            if (waveOut != null)
-            {
-               
-               waveOut.Dispose();
-               // waveOut = null;
-            }
+            waveOut.PlaybackStopped += WaveOut_PlaybackStopped;
+
+
+            waveOut.Stop();
+
+
         }
 
+        private void WaveOut_PlaybackStopped(object sender, StoppedEventArgs e)
+        {
+            CleanUp();
+        }
+
+        private void CleanUp()
+        {
+            _naudioTrackerStream?.Dispose();
+            _naudioTrackerStream = null;
+
+            waveOut?.Dispose();
+            waveOut = null;
+        }
 
         #region IRenderer Members
 
@@ -109,7 +100,7 @@ namespace SharpMod.SoundRenderer
 
             _naudioTrackerStream = new NAudioTrackerStream(Player);
             waveOut.Init(_naudioTrackerStream);
-            
+
             waveOut.Play();
         }
 
@@ -118,6 +109,18 @@ namespace SharpMod.SoundRenderer
             CloseWaveOut();
         }
 
+        public void Dispose()
+        {          
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            _naudioTrackerStream?.Dispose();
+            _naudioTrackerStream = null;
+        }
+
         #endregion
-    }    
+    }
 }

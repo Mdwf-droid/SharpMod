@@ -13,11 +13,15 @@ namespace SharpMod
         /// </summary>
         public byte[][] Samples { get; set; }
 
+        private static readonly char[] RiffHeader = ['R', 'I', 'F', 'F'];
+        private static readonly char[] WaveFmtHeader = ['W', 'A', 'V', 'E', 'f', 'm', 't', ' '];
+        private static readonly char[] DataHeader = new[] { 'd', 'a', 't', 'a' };
+
         ///<summary>
         ///</summary>
         public WaveTable()
         {
-            Samples = new byte[][]{};
+            Samples = [];
         }
 
         /// <summary>
@@ -29,7 +33,7 @@ namespace SharpMod
         {
             byte[] toReturn = null;
 
-            if(handle < Samples.Length)            
+            if (handle < Samples.Length)
                 toReturn = Samples[handle];
 
             return toReturn;
@@ -43,10 +47,12 @@ namespace SharpMod
         /// <param name="handle">Handle of the sample in the wave table</param>
         public void AddSample(byte[] sampleBytes, int handle)
         {
-            var tmp = new List<byte[]>(Samples);
-            tmp.Add(sampleBytes);
+            var tmp = new List<byte[]>(Samples)
+            {
+                sampleBytes
+            };
 
-            Samples = tmp.ToArray();
+            Samples = [.. tmp];
         }
 
         ///<summary>
@@ -56,7 +62,7 @@ namespace SharpMod
         ///<param name="bits"></param>
         ///<param name="channels"></param>
         ///<returns></returns>
-        public Stream GetSampleWaveStream(int handle, int sampleRate,int bits, int channels)
+        public Stream GetSampleWaveStream(int handle, int sampleRate, int bits, int channels)
         {
             var ms = new MemoryStream();
 
@@ -64,9 +70,9 @@ namespace SharpMod
             var averageBytesPerSecond = sampleRate * blockAlign;
 
             var w = new BinaryWriter(ms);
-            w.Write(new[] {'R','I','F','F'});
+            w.Write(RiffHeader);
             w.Write(0); // placeholder
-            w.Write(new[] {'W','A','V','E','f','m','t',' ' });
+            w.Write(WaveFmtHeader);
 
             w.Write(18); // wave format length
             w.Write((short)1);
@@ -76,21 +82,20 @@ namespace SharpMod
             w.Write(blockAlign);
             w.Write((short)bits);
             w.Write((short)0);
-            //format.Serialize(w);
+            
 
-            w.Write(new[]{'d','a','t','a'} );
+            w.Write(DataHeader);
             var dataSizePos = ms.Position;
             w.Write(0); // placeholder
 
             w.Write(Samples[handle], 0, Samples[handle].Length);
-            //dataChunkSize += count;
-
+            
             w.Flush();
             w.Seek(4, SeekOrigin.Begin);
             w.Write((int)(ms.Length - 8));
             w.Seek((int)dataSizePos, SeekOrigin.Begin);
             w.Write(Samples[handle].Length);
-            ms=new MemoryStream(ms.GetBuffer());
+            ms = new MemoryStream(ms.GetBuffer());
             w.Close();
 
             return ms;

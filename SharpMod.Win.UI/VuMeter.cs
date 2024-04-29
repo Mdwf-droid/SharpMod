@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using SharpMod.DSP;
+using System;
 using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
-using SharpMod.DSP;
 
 namespace SharpMod.Win.UI
 {
@@ -27,10 +22,10 @@ namespace SharpMod.Win.UI
         private int myHalfHeight;
         private int barWidth;
 
-        public static int MIXERMAXSAMPLE = 0x7FFF;
-        private static int FFT_SAMPLE_SIZE = 512;
+        public static readonly int MIXERMAXSAMPLE = 0x7FFF;
+        private static readonly int FFT_SAMPLE_SIZE = 512;
 
-        FFT fft = new FFT(FFT_SAMPLE_SIZE);
+        Fft fft = new(FFT_SAMPLE_SIZE);
 
         private int anzSamples;
         private bool switched;
@@ -45,8 +40,8 @@ namespace SharpMod.Win.UI
         {
             Fps = 25;
             InitializeComponent();
-            this.timerRefresh.Interval = 1000 / Fps;
-            this.timerRefresh.Start();
+            timerRefresh.Interval = 1000 / Fps;
+            timerRefresh.Start();
         }
 
 
@@ -63,12 +58,13 @@ namespace SharpMod.Win.UI
                 Array.Copy(samplesToProcess, 0, samples, 0, anzSamples);
                 for (int i = 0; i < anzSamples; i++)
                 {
-                    floatSamples[i] = ((float)samplesToProcess[i]) / (float)maxPeakValue;
+                    floatSamples[i] = ((float)samplesToProcess[i]) / maxPeakValue;
                 }
-                float[] resultFFTSamples = fft.calculate(floatSamples);
+                float[] resultFFTSamples = fft.Calculate(floatSamples);
 
-                int bd = 0;
-                for (int a = 0; bd < bands; bd++)
+
+                var a = 0;
+                for (var bd = 0; bd < bands; bd++)
                 {
                     a += multiplier;
                     float wFs = resultFFTSamples[a];
@@ -86,13 +82,13 @@ namespace SharpMod.Win.UI
                 floatSamples = null;
             }
 
-           
+
         }
 
         private void DrawMeter()
         {
-            this.RampDownValue = 1.0F / ((float)pbMeter.Height * ((float)/*FPS*/ Fps / 50F));
-            this.maxPeakLevelRampDownDelay = this.RampDownValue / Fps;
+            RampDownValue = 1.0F / ((float)pbMeter.Height * ((float)/*FPS*/ Fps / 50F));
+            maxPeakLevelRampDownDelay = RampDownValue / Fps;
 
             for (int i = 0; i < bands; i++)
             {
@@ -130,13 +126,13 @@ namespace SharpMod.Win.UI
                 SKcolor[i] = Color.FromArgb(255, i - 512, 0);
             }
 
-            myHalfHeight = pbMeter.Height/2;
+            myHalfHeight = pbMeter.Height / 2;
             if (MeterStyle == VuStyle.SA)
                 drawSAMeter();
             if (MeterStyle == VuStyle.Wave)
                 drawWaveMeter();
             if (MeterStyle == VuStyle.SK)
-                drawSKMeter();
+                DrawSKMeter();
 
         }
 
@@ -144,10 +140,9 @@ namespace SharpMod.Win.UI
         {
             Bitmap canvas = new Bitmap(pbMeter.Width, pbMeter.Height);
             Graphics g = Graphics.FromImage(canvas);
-            Pen pen = new System.Drawing.Pen(Color.WhiteSmoke);
 
-            g.Clear(Color.Black);           
-            
+            g.Clear(Color.Black);
+
             g.DrawLine(Pens.Green, 0, myHalfHeight, pbMeter.Width, myHalfHeight);
 
             if (samples == null) return;
@@ -161,7 +156,6 @@ namespace SharpMod.Win.UI
 
             if (samples != null && anzSamples > 0)
             {
-                //g.setColor(Color.WHITE);
                 for (int i = add; i < anzSamples; i += add)
                 {
                     int xp = (i * pbMeter.Width) / anzSamples;
@@ -181,14 +175,10 @@ namespace SharpMod.Win.UI
         }
 
 
-        private void drawSAMeter()//, int newTop, int newLeft, int newWidth, int newHeight)
+        private void drawSAMeter()
         {
-           
-            /*g.setColor(Color.BLACK);
-            g.fillRect(0, 0, newWidth, newHeight);*/
             Bitmap canvas = new Bitmap(pbMeter.Width, pbMeter.Height);
-            Graphics g = Graphics.FromImage(canvas);
-            Pen pen = new System.Drawing.Pen(Color.WhiteSmoke);
+            using Graphics g = Graphics.FromImage(canvas);
 
             g.Clear(Color.Black);
             for (int i = 0; i < bands; i++)
@@ -200,54 +190,44 @@ namespace SharpMod.Win.UI
                     maxPeakLevelRampDownValue[i] = maxPeakLevelRampDownDelay;
                 }
                 // Let's Draw it...
-                int barX = i *  barWidth;
+                int barX = i * barWidth;
                 int barX1 = barX + barWidth - 2;
                 int barHeight = (int)((float)pbMeter.Height * fftLevels[i]);
                 int maxBarHeight = (int)((float)pbMeter.Height * maxFFTLevels[i]);
                 int c = barHeight;
                 for (int y = pbMeter.Height - barHeight; y < pbMeter.Height; y++)
                 {
-                    //g.setColor(color[c--]);
                     g.DrawLine(new Pen(color[c--]), barX, y, barX1, y);
                 }
                 if (maxBarHeight > barHeight)
                 {
-                    // g.setColor(color[maxBarHeight]);
                     g.DrawLine(new Pen(color[maxBarHeight]), barX, pbMeter.Height - maxBarHeight, barX1, pbMeter.Height - maxBarHeight);
-                }               
+                }
             }
             pbMeter.Image = canvas;
-            g.Dispose();
+
         }
 
-        private void drawSKMeter()
+        private void DrawSKMeter()
         {
             Bitmap canvas = new Bitmap(pbMeter.Width, pbMeter.Height);
-            Graphics g = Graphics.FromImage(canvas);
+            using Graphics g = Graphics.FromImage(canvas);
             switched = !switched;
-            if (switched)
-            {
-                /*g.setColor(Color.BLACK);
-                g.fillRect(0, 0, newWidth, newHeight);*/
-                //g.Clear(Color.Black);
-                
-            }
-            if(pbMeter.Image != null)
+
+            if (pbMeter.Image != null)
                 g.DrawImage(pbMeter.Image, 1, 0, pbMeter.Width - 1, pbMeter.Height);
-            //g.copyArea(0, 0, newWidth - 1, newHeight, 1, 0);
+
             int max = bands - 1;
             for (int i = 0; i <= max; i++)
             {
                 int bary = (pbMeter.Height * (max - i)) / bands;
-                //g.setColor(SKcolor[(int)(((float)SKMax) * fftLevels[i])]);
-                g.DrawLine(new Pen(SKcolor[(int)(((float)SKMax) * fftLevels[i])]), 0, bary, 0, bary + 2);
+                g.DrawLine(new Pen(SKcolor[(int)(SKMax * fftLevels[i])]), 0, bary, 0, bary + 2);
             }
 
             pbMeter.Image = canvas;
-            g.Dispose();
         }
 
-        private void timerRefresh_Tick(object sender, EventArgs e)
+        private void TimerRefresh_Tick(object sender, EventArgs e)
         {
             DrawMeter();
         }

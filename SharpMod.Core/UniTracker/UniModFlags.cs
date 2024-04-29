@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SharpMod.UniTracker
 {
     /// <summary>
     /// UniMod flags
     /// </summary>
-	public enum UniModFlags : short
-	{
+    [Flags]
+    public enum UniModPeriods : short
+    {
         /// <summary>
         /// if set use XM periods/finetuning
         /// </summary>
@@ -16,6 +15,6 @@ namespace SharpMod.UniTracker
         /// <summary>
         /// if set use LINEAR periods
         /// </summary>
-		UF_LINEAR = 2 
-	}
+		UF_LINEAR = 2
+    }
 }

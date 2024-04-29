@@ -40,89 +40,47 @@ namespace SharpMod.UniTracker
     {
         protected internal const int BUFPAGE = 128; /* smallest unibuffer size */
         protected internal const int TRESHOLD = 16;	/* unibuffer is increased by BUFPAGE bytes when unipc reaches unimax-TRESHOLD */
-        protected internal static short[] UniOperands = new short[] { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-
-
-        private short[] _rowStart; /* startadress of a row */
-        private int _rowEnd; /* endaddress of a row (exclusive) */
-        private int _rowPC; /* current UniMod(tm) programcounter */
-        private short[] _uniBuf; /* pointer to the temporary unitrk buffer */
-        private int _uniMax; /* maximum number of bytes to be written to this buffer */
-        private int _uniPC; /* index in the buffer where next opcode will be written */
-        private int _uniTT; /* holds index of the rep/len byte of a row */
-        private int _lastP; /* holds index to the previous row (needed for compressing) */
+        protected internal static readonly short[] UniOperands = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
 
         /// <summary>
         /// startadress of a row
         /// </summary>
-        public short[] RowStart
-        {
-            get { return _rowStart; }
-            set { _rowStart = value; }
-        }
+        public short[] RowStart { get; set; }
 
         /// <summary>
         /// endaddress of a row (exclusive)
         /// </summary>
-        public int RowEnd
-        {
-            get { return _rowEnd; }
-            set { _rowEnd = value; }
-        }
+        public int RowEnd { get; set; }
 
         /// <summary>
         /// current UniMod(tm) programcounter
         /// </summary>
-        public int RowPC
-        {
-            get { return _rowPC; }
-            set { _rowPC = value; }
-        }
+        public int RowPC { get; set; }
 
         /// <summary>
         /// pointer to the temporary unitrk buffer
         /// </summary>
-        public short[] UniBuf
-        {
-            get { return _uniBuf; }
-            set { _uniBuf = value; }
-        }
+        public short[] UniBuf { get; set; }
 
         /// <summary>
         /// maximum number of bytes to be written to this buffer
         /// </summary>
-        public int UniMax
-        {
-            get { return _uniMax; }
-            set { _uniMax = value; }
-        }
+        public int UniMax { get; set; }
 
         /// <summary>
         /// index in the buffer where next opcode will be written
         /// </summary>
-        public int UniPC
-        {
-            get { return _uniPC; }
-            set { _uniPC = value; }
-        }
+        public int UniPC { get; set; }
 
         /// <summary>
         /// holds index of the rep/len byte of a row
         /// </summary>
-        public int UniTT
-        {
-            get { return _uniTT; }
-            set { _uniTT = value; }
-        }
+        public int UniTT { get; set; }
 
         /// <summary>
         /// holds index to the previous row (needed for compressing)
         /// </summary>
-        public int LastP
-        {
-            get { return _lastP; }
-            set { _lastP = value; }
-        }
+        public int LastP { get; set; }
 
 
         #region routines for reading a UNITRK stream:
@@ -141,21 +99,20 @@ namespace SharpMod.UniTracker
         public virtual void UniSetRow(short[] t, int start_at)
         {
             RowStart = t;
-            RowPC = start_at; //rowpc=rowstart;
-            RowEnd = RowPC + (RowStart[RowPC++] & 0x1f); //rowend=rowstart+(*(rowpc++)&0x1f);
+            RowPC = start_at;
+            RowEnd = RowPC + (RowStart[RowPC++] & 0x1f);
         }
 
 
         public virtual short UniGetByte()
         {
-            //return (rowpc<rowend) ? *(rowpc++) : 0;
-            return (short)((RowPC < RowEnd) ? RowStart[RowPC++] : (short)0);
+            return (RowPC < RowEnd) ? RowStart[RowPC++] : (short)0;
         }
 
 
         public virtual void UniSkipOpcode(short op)
         {
-            short t = UniOperands[op];
+            var t = UniOperands[op];
             while ((t--) != 0)
                 UniGetByte();
         }
@@ -169,25 +126,29 @@ namespace SharpMod.UniTracker
         public virtual int UniFindRow(short[] t, int row)
         {
             short c, l;
-            int tp = 0;
+            var tp = 0;
 
             while (true)
             {
+                /* get rep/len byte */
+                c = t[tp];
 
-                c = t[tp]; /* get rep/len byte */
-
+                /* zero ? -> end of track.. */
                 if (c == 0)
                     return -1;
-                /* zero ? -> end of track.. */
 
-                l = (short)((c >> 5) + 1); /* extract repeat value */
+                /* extract repeat value */
+                l = (short)((c >> 5) + 1);
 
+                /* reached wanted row? -> return pointer */
                 if (l > row)
                     break;
-                /* reached wanted row? -> return pointer */
 
-                row -= l; /* havn't reached row yet.. update row */
-                tp += c & 0x1f; /* point t to the next row */
+                /* havn't reached row yet.. update row */
+                row -= l;
+
+                /* point t to the next row */
+                tp += c & 0x1f;
             }
 
             return tp;
@@ -200,7 +161,7 @@ namespace SharpMod.UniTracker
         /// <summary>
         /// Resets index-pointers to create a new track.
         /// </summary>
-        public virtual void UniReset()       
+        public virtual void UniReset()
         {
             UniTT = 0; /* reset index to rep/len byte */
             UniPC = 1; /* first opcode will be written to index 1 */
@@ -210,7 +171,7 @@ namespace SharpMod.UniTracker
 
         public virtual void UniWrite(Effects data)
         {
-            this.UniWrite((short)data);
+            UniWrite((short)data);
         }
 
         /// <summary>
@@ -220,12 +181,10 @@ namespace SharpMod.UniTracker
         public virtual void UniWrite(short data)
         {
             /* write byte to current position and update */
-
             data &= 0xFF;
             UniBuf[UniPC++] = data;
 
             /* Check if we've reached the end of the buffer */
-
             if (UniPC > (UniMax - TRESHOLD))
             {
 
@@ -233,32 +192,13 @@ namespace SharpMod.UniTracker
 
                 /* We've reached the end of the buffer, so expand
                 the buffer by BUFPAGE bytes */
-
-                // newbuf=(short *)realloc(unibuf,(unimax+BUFPAGE)*2);
                 newbuf = new short[UniMax + BUFPAGE];
 
-                /* Check if realloc succeeded */
+                Array.Copy(UniBuf, newbuf, UniMax);
 
-                if (newbuf != null)
-                {
-                    int i;
-                    for (i = 0; i < UniMax; i++)
-                        newbuf[i] = UniBuf[i];
-                    //delete [] unibuf;
-                    UniBuf = null;
+                UniBuf = newbuf;
+                UniMax += BUFPAGE;
 
-                    UniBuf = newbuf;
-                    UniMax += BUFPAGE;
-                }
-                else
-                {
-                    /* realloc failed, so decrease unipc so we won't write beyond
-                    the end of the buffer.. I don't report the out-of-memory
-                    here; the UniDup() will fail anyway so that's where the
-                    loader sees that something went wrong */
-
-                    UniPC--;
-                }
             }
         }
 
@@ -303,9 +243,7 @@ namespace SharpMod.UniTracker
 
         public virtual bool MyCmp(short[] a, int a_offset, short[] b, int b_offset, int l)
         {
-            int t;
-
-            for (t = 0; t < l; t++)
+            for (var t = 0; t < l; t++)
             {
                 if (a[t + a_offset] != b[t + b_offset])
                     return false;
@@ -319,16 +257,13 @@ namespace SharpMod.UniTracker
         /// </summary>
         public virtual void UniNewline()
         {
-            int n, l, len;
+            var n = (UniBuf[LastP] >> 5) + 1; /* repeat of previous row */
+            var l = (UniBuf[LastP] & 0x1f); /* length of previous row */
 
-            n = (UniBuf[LastP] >> 5) + 1; /* repeat of previous row */
-            l = (UniBuf[LastP] & 0x1f); /* length of previous row */
-
-            len = UniPC - UniTT; /* length of current row */
+            var len = UniPC - UniTT; /* length of current row */
 
             /* Now, check if the previous and the current row are identical..
             when they are, just increase the repeat field of the previous row */
-
             if (n < 8 && len == l && MyCmp(UniBuf, LastP + 1, UniBuf, UniTT + 1, (len - 1)))
             {
                 UniBuf[LastP] = (short)(UniBuf[LastP] + (short)0x20);
@@ -337,7 +272,6 @@ namespace SharpMod.UniTracker
             else
             {
                 /* current and previous row aren't equal.. so just update the pointers */
-
                 UniBuf[UniTT] = (short)len;
                 LastP = UniTT;
                 UniTT = UniPC;
@@ -351,22 +285,13 @@ namespace SharpMod.UniTracker
         /// </summary>
         /// <returns></returns>
         public virtual short[] UniDup()
-        {
-            int i;
-            short[] d;
-
+        {  
             UniBuf[UniTT] = 0;
+                       
+            var d = new short[UniPC];
 
-            /*if((d=(short *)malloc(unipc*2))==NULL){
-            m_->mmIO->myerr=m_->ERROR_ALLOC_STRUCT;
-            return NULL;
-            }*/
-            d = new short[UniPC];
-
-            //memcpy(d,unibuf,unipc*2);
-            for (i = 0; i < UniPC; i++)
-                d[i] = UniBuf[i];
-
+            Array.Copy(UniBuf, d, UniPC);
+           
             return d;
         }
 
@@ -377,9 +302,9 @@ namespace SharpMod.UniTracker
         /// <returns></returns>
         public virtual int TrkLen(short[] t)
         {
-            int len = 0;
+            var len = 0;
             short c;
-            int tp = 0;
+            var tp = 0;
 
             while ((c = (short)(t[tp] & 0x1f)) != 0)
             {
@@ -395,11 +320,7 @@ namespace SharpMod.UniTracker
         public virtual bool UniInit()
         {
             UniMax = BUFPAGE;
-
-            /*if(!(unibuf=(short *)malloc(unimax*2))){
-            m_->mmIO->myerr=m_->ERROR_ALLOC_STRUCT;
-            return 0;
-            }*/
+                      
             UniBuf = new short[UniMax];
             return true;
         }
@@ -410,6 +331,6 @@ namespace SharpMod.UniTracker
             UniBuf = null;
         }
 
-#endregion
+        #endregion
     }
 }

@@ -1,14 +1,13 @@
-﻿using System;
-using System.Text;
-using System.Windows.Forms;
-using AdvancedNetModTest.Properties;
-using SharpMod.Song;
+﻿using AdvancedNetModTest.Properties;
 using SharpMod;
 using SharpMod.DSP;
-using SharpMod.Win.UI;
+using SharpMod.Song;
 using SharpMod.SoundRenderer;
-using SharpMod.UniTracker;
+using SharpMod.Win.UI;
+using System;
 using System.Drawing;
+using System.Text;
+using System.Windows.Forms;
 
 namespace AdvancedNetModTest
 {
@@ -43,11 +42,13 @@ namespace AdvancedNetModTest
                 var method = new GetPlayerInfosHandler(UpdateUip);
                 try
                 {
-                    Invoke(method, new[] { sender, e });
+                    if (!Disposing)
+                        Invoke(method, sender, e);
                 }
-                catch (Exception)
+                catch(ObjectDisposedException)
                 {
-                }
+                    // Do nothing
+                }                
             }
             else
             {
@@ -58,15 +59,16 @@ namespace AdvancedNetModTest
 
         void UpdateUip(object sender, SharpModEventArgs sme)
         {
-            tbPos.Text= String.Format("{0:000}/{1:000}", sme.PatternPosition, Player.CurrentModule.Patterns[sme.SongPosition].RowsCount);
+            tbPos.Text = String.Format("{0:000}/{1:000}", sme.PatternPosition, Player.CurrentModule.Patterns[sme.SongPosition].RowsCount);
+
 
             tbPatNo.Text = String.Format("{0:000}", sme.PatternNumber);
 
-            foreach(ListViewItem ob in listView1.Items)
+            foreach (ListViewItem ob in listView1.Items)
                 ob.BackColor = Color.White;
-            
+
             listView1.Items[sme.SongPosition].BackColor = Color.AliceBlue;
-            
+
         }
 
         private void Button2Click(object sender, EventArgs e)
@@ -88,8 +90,6 @@ namespace AdvancedNetModTest
 
         private void Form1FormClosing(object sender, FormClosingEventArgs e)
         {
-            if(Player != null)
-                Player.Stop();
             base.OnClosing(e);
         }
 
@@ -105,20 +105,16 @@ namespace AdvancedNetModTest
 
                 MyMod = ModuleLoader.Instance.LoadModule(ofdModFile.OpenFile());
 
-              /*  MyMod.Patterns[1].Tracks[1].Cells[63].Effect = 0xB;
-                MyMod.Patterns[1].Tracks[1].Cells[63].EffectData = 0;
-                MyMod.Patterns[1].Tracks[1].ValidateChanges();*/
-
 
                 Player = new ModulePlayer(MyMod)
-                             {
-                                 MixCfg =
+                {
+                    MixCfg =
                                      {
                                          Rate = 48000,
                                          Is16Bits = checkBox1.Checked,
                                          Interpolate = checkBox3.Checked
                                      }
-                             };
+                };
 
                 if (radioButton1.Checked)
                 {
@@ -133,8 +129,8 @@ namespace AdvancedNetModTest
                     Player.MixCfg.Style = SharpMod.Player.RenderingStyle.Surround;
                 }
 
-                var drv = new NAudioWaveChannelDriver(NAudioWaveChannelDriver.Output.DirectSound){Latency=125};
-                Player.RegisterRenderer(drv);                
+                var drv = new NAudioWaveChannelDriver(NAudioWaveChannelDriver.Output.Wasapi) { Latency = 125 };
+                Player.RegisterRenderer(drv);
                 Player.DspAudioProcessor = new AudioProcessor(1024, 50);
                 Player.DspAudioProcessor.OnCurrentSampleChanged += DspAudioProcessor_OnCurrentSampleChanged;
                 Player.OnGetPlayerInfos += player_OnGetPlayerInfos;
@@ -149,25 +145,30 @@ namespace AdvancedNetModTest
 
                 listView1.Items.Clear();
                 int i = 0;
-                foreach(var val in MyMod.Positions)
+                foreach (var val in MyMod.Positions)
                     listView1.Items.Add(new ListViewItem(string.Format("{0:00}:{1:000}", i++, val)) { Tag = val });
             }
         }
 
         private void chkLoop_CheckedChanged(object sender, EventArgs e)
         {
-            Player.PlayerInstance.mp_loop = chkLoop.Checked;
-        }
-
-        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-           //
+            Player.PlayerInstance.MpLoop = chkLoop.Checked;
         }
 
         private void listView1_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (listView1.SelectedIndices.Count > 0)
-            Player.PlayerInstance.mp_sngpos =(short)( (int)listView1.SelectedIndices[0] );
+                Player.PlayerInstance.MpSngPos = (short)listView1.SelectedIndices[0];
         }
+
+        /*   protected override void OnClosed(EventArgs e)
+           {
+
+               if (Player != null)
+               {
+                   Player.Dispose();
+               }
+               base.OnClosed(e);
+           }*/
     }
 }

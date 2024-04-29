@@ -1,5 +1,5 @@
-using System;
 using SharpMod.Song;
+using System;
 using System.Collections.Generic;
 
 namespace SharpMod.UniTracker
@@ -9,7 +9,7 @@ namespace SharpMod.UniTracker
         /// <summary>
         /// number of channels
         /// </summary>
-        public short NumChn  {get;set;}
+        public short NumChn { get; set; }
 
         /// <summary>
         /// number of positions in this song
@@ -45,7 +45,7 @@ namespace SharpMod.UniTracker
         /// Initial Tempo
         /// </summary>
         public short InitTempo { get; set; }
-                
+
         /// <summary>
         /// all positions
         /// </summary>

@@ -1,15 +1,15 @@
-﻿using System;
+﻿using SharpMod.UniTracker;
+using System;
 using System.Collections.Generic;
-using SharpMod.UniTracker;
 
 namespace SharpMod.Song
 {
-    
-	///<summary>
-	/// Container for all elements of a given song module
-	///</summary>
-	public class SongModule
-	{
+
+    ///<summary>
+    /// Container for all elements of a given song module
+    ///</summary>
+    public class SongModule
+    {
         /// <summary>
         /// All positions, that define the order of patterns while playing
         /// </summary>
@@ -48,7 +48,7 @@ namespace SharpMod.Song
         /// <summary>
         /// Flags that define period type
         /// </summary>
-        public UniModFlags Flags { get; set; }
+        public UniModPeriods Flags { get; set; }
 
         /// <summary>
         /// name of the song
@@ -69,38 +69,19 @@ namespace SharpMod.Song
         /// restart position 
         /// </summary>
         public short RepPos { get; set; }
-
-        /*public SongModule(UniMod uniModSong )
-        {            
-            Patterns = new List<Pattern>();
-            Instruments = new List<Instrument>();            
-            Positions = new List<int>();
-        }*/
+               
 
         ///<summary>
         /// Default Constructor
         ///</summary>
         public SongModule()
-        {           
-            Panning = new short[32];
-            Patterns = new List<Pattern>();
-            Instruments = new List<Instrument>();
-            Positions = new List<int>();
-        }
-
-       /* internal Pattern AddPattern(int patternNumber, int rowCount,int trackCount,UniMod uniMod)
         {
-            Pattern p = new Pattern(rowCount);
-            //p.PatternRowCount = rowCount;
-            
-            for (int chan = 0; chan < trackCount; chan++)
-            {
-                //p.PatternContent[chan] = new Track(uniMod, patternNumber,chan , rowCount);
-            }
-
-            this.Patterns.Add(p);
-            return p;
-        }*/
+            Panning = new short[32];
+            Patterns = [];
+            Instruments = [];
+            Positions = [];
+        }
+              
 
     }
 }

@@ -1,7 +1,7 @@
-﻿using System;
+﻿using SharpMod.IO;
 using SharpMod.Song;
 using SharpMod.UniTracker;
-using SharpMod.IO;
+using System;
 
 namespace SharpMod
 {
@@ -11,16 +11,19 @@ namespace SharpMod
     ///<param name="numPat"></param>
     ///<param name="rowsCount"></param>
     public delegate bool AllocPatternsHandler(SongModule module, int numPat, int rowsCount);
+
     ///<summary>
     ///</summary>
     ///<param name="pat"></param>
     ///<param name="channelCount"></param>
-    public delegate bool AllocTracksHandler(Pattern pat,int channelCount);
+    public delegate bool AllocTracksHandler(Pattern pat, int channelCount);
+
     ///<summary>
     ///</summary>
     ///<param name="module"></param>
     ///<param name="nbInstruments"></param>
     public delegate bool AllocInstrumentsHandler(SongModule module, int nbInstruments);
+
     ///<summary>
     ///</summary>
     ///<param name="ins"></param>
@@ -45,7 +48,7 @@ namespace SharpMod
 
         ///<summary>
         ///</summary>
-        ModBinaryReader Reader{ get; set; }
+        ModBinaryReader Reader { get; set; }
 
         ///<summary>
         ///</summary>
@@ -68,22 +71,18 @@ namespace SharpMod
             get;
             set;
         }
-
-       /* UniMod UniModule
-        {
-            get;
-            set;
-        }*/
        
         ///<summary>
         ///</summary>
         ///<param name="module"></param>
         ///<returns></returns>
         bool Init(SongModule module);
+
         ///<summary>
         ///</summary>
         ///<returns></returns>
         bool Load();
+
         ///<summary>
         ///</summary>
         ///<returns></returns>

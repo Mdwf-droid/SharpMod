@@ -1,6 +1,6 @@
-﻿using System;
+﻿using SharpMod.Player;
+using System;
 using System.Collections.Generic;
-using SharpMod.Player;
 
 namespace SharpMod
 {
@@ -26,10 +26,8 @@ namespace SharpMod
         {
             get
             {
-                if (_audioValues == null)
-                    _audioValues = new Dictionary<int, ChannelMemory>();
-                return
-                _audioValues;
+                _audioValues ??= [];
+                return _audioValues;
             }
             set { _audioValues = value; }
         }

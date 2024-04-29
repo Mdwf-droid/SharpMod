@@ -1,22 +1,21 @@
-﻿using System;
+﻿using SharpMod.Exceptions;
+using SharpMod.IO;
+using SharpMod.Song;
+using SharpMod.UniTracker;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
-using SharpMod.Song;
-using System.IO;
-using SharpMod.Exceptions;
-using SharpMod.IO;
-using SharpMod.UniTracker;
 
 namespace SharpMod
 {
     ///<summary>
     ///</summary>
     public class ModuleLoader
-    {
-        private ILoader _currentLoader;
+    {        
         private ModBinaryReader _reader;
-        private SampleLoader _sampleLoader;
+        private readonly SampleLoader _sampleLoader;
         private List<byte[]> _samples;
         private UniTrk _uniTrack;
 
@@ -33,8 +32,7 @@ namespace SharpMod
         {
             get
             {
-                if (_instance == null)
-                    _instance = new ModuleLoader();
+                _instance ??= new ModuleLoader();
 
                 return _instance;
             }
@@ -46,7 +44,7 @@ namespace SharpMod
         /// </summary>
         private ModuleLoader()
         {
-            Loaders = new List<ILoader>();
+            Loaders = [];
             _sampleLoader = new SampleLoader();
             LoadInternalsLoaders();
         }
@@ -61,7 +59,7 @@ namespace SharpMod
             loader.AllocPatterns += AllocPatterns;
             loader.AllocSamples += AllocSamples;
             loader.AllocTracks += AllocTracks;
-            
+
             Loaders.Add(loader);
         }
 
@@ -70,11 +68,9 @@ namespace SharpMod
         /// </summary>
         private void LoadInternalsLoaders()
         {
-            // Retrieve types that implements ILoader interface
-// ReSharper disable AssignNullToNotNullAttribute
-            var loaders = Assembly.GetExecutingAssembly().GetExportedTypes().Where(x => x.GetInterface(typeof(ILoader).FullName,false) != null).ToList();
-// ReSharper restore AssignNullToNotNullAttribute
-
+            // Retrieve types that implements ILoader interface           
+            var loaders = Assembly.GetExecutingAssembly().GetExportedTypes().Where(x => x.GetInterface(typeof(ILoader).FullName, false) != null).ToList();
+            
             loaders.ForEach(new Action<Type>(x =>
                 {
                     var loader = (ILoader)Activator.CreateInstance(x);
@@ -92,7 +88,7 @@ namespace SharpMod
         private void Init()
         {
             _uniTrack = new UniTrk();
-            _samples = new List<byte[]>();
+            _samples = [];
         }
 
         /// <summary>
@@ -102,25 +98,18 @@ namespace SharpMod
         /// <returns>SongModule</returns>
         public SongModule LoadModule(string fileName)
         {
-            Stream stream;
-
             try
             {
-                if ((stream = new FileStream(fileName, FileMode.Open, FileAccess.Read)) == null)
-                {
-                    throw new SharpModException(SharpModExceptionResources.ERROR_OPENING_FILE, fileName);
-                }
+
+                using var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
 
                 var toReturn = LoadModule(stream);
 
-                stream.Close();
-                stream.Dispose();
-
                 return toReturn;
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                throw e;
+                throw new SharpModException($"{SharpModExceptionResources.ERROR_OPENING_FILE} : {fileName}", ex);
             }
         }
 
@@ -144,14 +133,12 @@ namespace SharpMod
             }
 
             if (!LoadHeader(toReturn))
-            {
-                toReturn = null;
+            {               
                 throw new SharpModException(SharpModExceptionResources.ERROR_LOADING_HEADER);
             }
 
             if (!LoadSamples(toReturn))
-            {
-                toReturn = null;
+            {             
                 throw new SharpModException(SharpModExceptionResources.ERROR_LOADING_SAMPLEINFO);
             }
 
@@ -167,7 +154,7 @@ namespace SharpMod
         {
             var toReturn = false;
 
-            _currentLoader = null;
+            ILoader _currentLoader = null;
             foreach (var loader in Loaders)
             {
                 //Reset the reader
@@ -189,7 +176,7 @@ namespace SharpMod
             if (!_uniTrack.UniInit())
                 return false;
 
-            _currentLoader.UniTrack = _uniTrack;     
+            _currentLoader.UniTrack = _uniTrack;
 
             // init module loader
             if (_currentLoader.Init(module))
@@ -251,12 +238,12 @@ namespace SharpMod
         /// <param name="repend">Repeat end position</param>
         /// <param name="flags">Sample format flags</param>
         /// <returns>Handle of the sample</returns>
-        public short SampleLoad(int length, int reppos, int repend, SampleFormatFlags flags)
+        public short SampleLoad(int length, int reppos, int repend, SampleFormats flags)
         {
             // Find empty slot to put sample address in
             var handle = _samples.Count;
 
-            _sampleLoader.Init(_reader, flags, ((flags | (SampleFormatFlags.SF_SIGNED)) & ~(SampleFormatFlags.SF_16BITS)));
+            _sampleLoader.Init(_reader, flags, ((flags | (SampleFormats.SF_SIGNED)) & ~(SampleFormats.SF_16BITS)));
 
             // create the new byte array entry
             _samples.Add(new byte[length + 17]);
@@ -265,9 +252,9 @@ namespace SharpMod
             LargeRead(_samples[handle], length);
 
             // Unclick samples: 
-            if ((flags & (SampleFormatFlags.SF_LOOP)) != 0)
+            if ((flags & (SampleFormats.SF_LOOP)) != 0)
             {
-                if ((flags & (SampleFormatFlags.SF_BIDI)) != 0)
+                if ((flags & (SampleFormats.SF_BIDI)) != 0)
                     for (var t = 0; t < 16; t++)
                         _samples[handle][repend + t] = _samples[handle][(repend - t) - 1];
                 else
@@ -311,7 +298,7 @@ namespace SharpMod
         /// <param name="module"></param>
         /// <param name="nbInstruments"></param>
         /// <returns></returns>
-        public bool AllocInstruments(SongModule module, int nbInstruments)
+        public static bool AllocInstruments(SongModule module, int nbInstruments)
         {
             module.Instruments = new List<Instrument>(nbInstruments);
             for (var i = 0; i < nbInstruments; i++)
@@ -336,7 +323,7 @@ namespace SharpMod
                 module.Instruments[i].VolFade = 0;
 
                 module.Instruments[i].InsName = null;
-                module.Instruments[i].Samples = new List<Sample>();
+                module.Instruments[i].Samples = [];
 
                 for (var j = 0; j < 96; j++)
                     module.Instruments[i].SampleNumber[j] = 0;
@@ -357,13 +344,13 @@ namespace SharpMod
         /// </summary>
         /// <param name="ins"></param>
         /// <returns></returns>
-        public bool AllocSamples(Instrument ins)
+        public static bool AllocSamples(Instrument ins)
         {
             int n;
 
             if ((n = ins.NumSmp) != 0)
-            {                
-                ins.Samples = new List<Sample>(n);// new Sample[n];
+            {
+                ins.Samples = new List<Sample>(n);
                 for (var u = 0; u < n; u++)
                 {
                     ins.Samples.Add(new Sample());
@@ -384,7 +371,7 @@ namespace SharpMod
                     ins.Samples[u].Panning = 128;
                     ins.Samples[u].Handle = -1;
                 }
-              
+
             }
             return true;
         }
@@ -397,18 +384,14 @@ namespace SharpMod
         ///<returns></returns>
         public bool AllocPatterns(SongModule module, int numPat, int rowsCount)
         {
-            // Allocate track sequencing array
-            //module.Patterns = new List<Pattern>(numPat);
-            if (module.Patterns == null)
-                module.Patterns = new List<Pattern>();
+            // Allocate track sequencing array            
+            module.Patterns ??= [];
 
             if (module.Patterns.Count <= numPat)
                 module.Patterns.Add(new Pattern(rowsCount));
             else
                 module.Patterns[numPat] = new Pattern(rowsCount);
-            //for (int t = 0; t < numPat; t++)
-                
-
+            
             return true;
         }
 
@@ -417,18 +400,17 @@ namespace SharpMod
         ///<param name="pat"></param>
         ///<param name="channelCount"></param>
         ///<returns></returns>
-        public bool AllocTracks(Pattern pat,int channelCount)
-        {
-           // foreach (Pattern pat in module.Patterns)
-           // {
-            pat.Tracks = new List<Track>(channelCount/*module.ChannelsCount*/);
-            for (int t = 0; t < channelCount/*module.ChannelsCount*/; t++)
+        public static bool AllocTracks(Pattern pat, int channelCount)
+        {            
+            pat.Tracks = new List<Track>(channelCount);
+            for (int t = 0; t < channelCount; t++)
+            {
+                var trk = new Track
                 {
-                    var trk = new Track();
-                    trk.UniTrack = new short[] { };
-                    pat.Tracks.Add(trk);
-                }
-          //  }
+                    UniTrack = []
+                };
+                pat.Tracks.Add(trk);
+            }         
 
             return true;
         }

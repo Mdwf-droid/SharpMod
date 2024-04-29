@@ -1,11 +1,11 @@
-﻿using System;
-using System.Linq;
-using SharpMod.Song;
-using SharpMod.Player;
-using SharpMod.Mixer;
-using SharpMod.UniTracker;
+﻿using SharpMod.DSP;
 using SharpMod.Exceptions;
-using SharpMod.DSP;
+using SharpMod.Mixer;
+using SharpMod.Player;
+using SharpMod.Song;
+using SharpMod.UniTracker;
+using System;
+using System.Linq;
 
 namespace SharpMod
 {
@@ -19,7 +19,7 @@ namespace SharpMod
 
     ///<summary>
     ///</summary>
-    public class ModulePlayer
+    public class ModulePlayer : IDisposable
     {
         ///<summary>
         ///</summary>
@@ -63,17 +63,7 @@ namespace SharpMod
                 }
             }
         }
-        /*private DMode _mode;
-        public DMode Mode
-        {
-            get { return _mode; }
-            set
-            {
-                _mode = value;
-                
-                ChannelsMixer._dMode = _mode;
-            }
-        }*/
+        
         private MixConfig _mixCfg;
         ///<summary>
         ///</summary>
@@ -88,7 +78,6 @@ namespace SharpMod
             }
         }
 
-        private UniTrk _uniTrk;
         ///<summary>
         ///</summary>
         public bool IsPlaying
@@ -102,24 +91,25 @@ namespace SharpMod
         ///<param name="module"></param>
         public ModulePlayer(SongModule module)
         {
-            _uniTrk = new UniTrk();
+            var _uniTrk = new UniTrk();
             _uniTrk.UniInit();
             CurrentModule = module;
             WaveTableInstance = new WaveTable();
             PlayerInstance = new SharpModPlayer(_uniTrk);
             MixCfg = new MixConfig { Is16Bits = true, Style = RenderingStyle.Stereo, Rate = 48000 };
-            ChannelsMixer = new ChannelsMixer(MixCfg /* DMode.DMODE_16BITS | DMode.DMODE_STEREO*/);
-            //this.ChannelsMixer.MixFreq = 48000;
-            ChannelsMixer.ChannelsCount = module.ChannelsCount;
+            ChannelsMixer = new ChannelsMixer(MixCfg)
+            {
+                ChannelsCount = module.ChannelsCount
+            };
             ChannelsMixer.OnTickHandler += PlayerInstance.MP_HandleTick;
-            ChannelsMixer.OnBPMRequest += delegate { return PlayerInstance.mp_bpm; };
+            ChannelsMixer.OnBPMRequest += delegate { return PlayerInstance.MpBpm; };
             ChannelsMixer.WaveTable = WaveTableInstance;
 
             PlayerInstance.MP_Init(CurrentModule);
-            PlayerInstance._mixer = ChannelsMixer;
+            PlayerInstance.Mixer = ChannelsMixer;
             PlayerInstance.SpeedConstant = 1.0f;
-            PlayerInstance.mp_volume = 100;
-            PlayerInstance.mp_bpm = 125;
+            PlayerInstance.MpVolume = 100;
+            PlayerInstance.MpBpm = 125;
             PlayerInstance.OnUpdateUI += PlayerInstance_OnUpdateUI;
             PlayerInstance.OnCurrentModEnd += new CurrentModEndHandler(PlayerInstance_OnCurrentModEnd);
 
@@ -128,8 +118,7 @@ namespace SharpMod
 
         void PlayerInstance_OnCurrentModEnd()
         {
-            if (OnCurrentModulePlayEnd != null)
-                OnCurrentModulePlayEnd(this, new EventArgs());
+            OnCurrentModulePlayEnd?.Invoke(this, new EventArgs());
         }
 
         void PlayerInstance_OnUpdateUI()
@@ -138,14 +127,13 @@ namespace SharpMod
                 return;
 
             var sme = new SharpModEventArgs
-                          {
-                              PatternNumber = PlayerInstance.CurrentUniMod.Positions[PlayerInstance.mp_sngpos],
-                              SongPosition = PlayerInstance.mp_sngpos,
-                              PatternPosition = PlayerInstance.mp_patpos
-                          };
+            {
+                PatternNumber = PlayerInstance.CurrentUniMod.Positions[PlayerInstance.MpSngPos],
+                SongPosition = PlayerInstance.MpSngPos,
+                PatternPosition = PlayerInstance.MpPatpos
+            };
 
-            if (OnGetPlayerInfos != null)
-                OnGetPlayerInfos(this, sme);
+            OnGetPlayerInfos?.Invoke(this, sme);
         }
 
         /// <summary>
@@ -191,8 +179,9 @@ namespace SharpMod
             {
                 IsPlaying = false;
                 Pause();
-                ChannelsMixer.VC_PlayStop();
+               
                 SoundRenderer.PlayStop();
+                //ChannelsMixer.VC_PlayStop();
             }
         }
 
@@ -207,7 +196,7 @@ namespace SharpMod
 
         ///<summary>
         ///</summary>
-        public byte[] CurrentBytesWindow;
+        public byte[] CurrentBytesWindow { get;private set; }
         ///<summary>
         ///</summary>
         ///<param name="buffer"></param>
@@ -234,5 +223,20 @@ namespace SharpMod
             SoundRenderer.Player = this;
             SoundRenderer.Init();
         }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            SoundRenderer?.Dispose();
+            SoundRenderer = null;
+            IsDisposed = true;
+        }
+
+        public bool IsDisposed { get; private set; }
     }
 }

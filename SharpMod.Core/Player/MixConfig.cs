@@ -1,17 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SharpMod.Player
-{
-    /*[Flags]
-	public enum DMode:int
-	{
-        DMODE_STEREO = 1,
-        DMODE_16BITS = 2,
-        DMODE_INTERP = 4,
-        DMODE_SURROUND = 8
-	}*/
+﻿namespace SharpMod.Player
+{   
 
     public class MixConfig
     {
@@ -20,7 +8,7 @@ namespace SharpMod.Player
         public bool NoiseReduction { get; set; }
         public RenderingStyle Style { get; set; }
         public int Rate { get; set; }
-        private int _reverb =0;        
+        private int _reverb = 0;
         public int Reverb
         {
             get { return _reverb; }
@@ -30,7 +18,7 @@ namespace SharpMod.Player
         public MixConfig()
         {
             Is16Bits = true;
-            Style = RenderingStyle.Stereo;            
+            Style = RenderingStyle.Stereo;
         }
     }
 
@@ -40,5 +28,5 @@ namespace SharpMod.Player
         Stereo,
         Surround
     }
-    
+
 }

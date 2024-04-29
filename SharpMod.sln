@@ -1,19 +1,19 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26430.6
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Windows", "Windows", "{413F86C2-FFAE-4350-9620-CF11B08AE760}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpMod.Win", "SharpMod.Win\SharpMod.Win.csproj", "{AC98CBA6-B2DA-402C-8C4E-777072BAE569}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharpMod.Win", "SharpMod.Win\SharpMod.Win.csproj", "{AC98CBA6-B2DA-402C-8C4E-777072BAE569}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpMod.Win.CommandLine.Demo", "SharpMod.Win.CommandLine.Demo\SharpMod.Win.CommandLine.Demo.csproj", "{478B570E-398F-459B-AE2B-CBBE8FC0A7DF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharpMod.Win.CommandLine.Demo", "SharpMod.Win.CommandLine.Demo\SharpMod.Win.CommandLine.Demo.csproj", "{478B570E-398F-459B-AE2B-CBBE8FC0A7DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpMod.Win.Forms.Demo", "SharpMod.Win.Forms.Demo\SharpMod.Win.Forms.Demo.csproj", "{F2A8BDDB-58EF-41CB-9325-5EBB3DCAD7A7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharpMod.Win.Forms.Demo", "SharpMod.Win.Forms.Demo\SharpMod.Win.Forms.Demo.csproj", "{F2A8BDDB-58EF-41CB-9325-5EBB3DCAD7A7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpMod.Win.UI", "SharpMod.Win.UI\SharpMod.Win.UI.csproj", "{B623860D-BC26-456C-9C2F-CF61B183E42C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharpMod.Win.UI", "SharpMod.Win.UI\SharpMod.Win.UI.csproj", "{B623860D-BC26-456C-9C2F-CF61B183E42C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpMod.Core", "SharpMod.Core\SharpMod.Core.csproj", "{2D9ED280-A4B6-40BA-9409-0C89037E4902}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharpMod.Core", "SharpMod.Core\SharpMod.Core.csproj", "{2D9ED280-A4B6-40BA-9409-0C89037E4902}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

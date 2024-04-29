@@ -1,10 +1,9 @@
-using System;
 using SharpMod.Song;
 
 namespace SharpMod.Player
-{	
-	public class ChannelMemory
-	{
+{
+    public class ChannelMemory
+    {
 
         public Instrument Instrument
         {
@@ -19,7 +18,7 @@ namespace SharpMod.Player
             set;
         }
 
-       
+
         /// <summary>
         /// fading volume
         /// </summary>
@@ -44,7 +43,7 @@ namespace SharpMod.Player
             set;
         }
 
-        
+
         /// <summary>
         /// if true=key is pressed.
         /// </summary>
@@ -53,7 +52,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-               
+
         /// <summary>
         /// if true=sample has to be restarted 
         /// </summary>
@@ -62,7 +61,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-      
+
         /// <summary>
         ///  which sample number (0-31)
         /// </summary>
@@ -71,7 +70,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-     
+
         /// <summary>
         /// which sample-handle
         /// </summary>
@@ -80,7 +79,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-               
+
         /// <summary>
         /// The start byte index in the sample
         /// </summary>
@@ -98,7 +97,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-      
+
         /// <summary>
         /// panslide speed
         /// </summary>
@@ -107,7 +106,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-                
+
         /// <summary>
         /// amiga volume (0 t/m 64) to play the sample at
         /// </summary>
@@ -116,7 +115,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-               
+
         /// <summary>
         /// period to play the sample at
         /// </summary>
@@ -125,9 +124,9 @@ namespace SharpMod.Player
             get;
             set;
         }
-		
-		// You should not have to use the values
-		// below in the player routine
+
+        // You should not have to use the values
+        // below in the player routine
 
 
 
@@ -157,7 +156,7 @@ namespace SharpMod.Player
             set;
         }
 
-               /// <summary>
+        /// <summary>
         /// row currently playing on this channel
         /// </summary>
         public short[] Row
@@ -172,7 +171,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-                
+
         /// <summary>
         /// retrig value (0 means don't retrig) 
         /// </summary>
@@ -181,7 +180,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-      
+
         /// <summary>
         /// what finetune to use
         /// </summary>
@@ -191,7 +190,7 @@ namespace SharpMod.Player
             set;
         }
 
-      
+
         /// <summary>
         /// tmp volume
         /// </summary>
@@ -201,7 +200,7 @@ namespace SharpMod.Player
             set;
         }
 
-      
+
         /// <summary>
         /// tmp period 
         /// </summary>
@@ -210,7 +209,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-       
+
         /// <summary>
         /// period to slide to (with effect 3 or 5)
         /// </summary>
@@ -226,7 +225,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-        
+
         /// <summary>
         /// noteslide speed (toneportamento)
         /// </summary>
@@ -235,7 +234,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-              
+
         /// <summary>
         /// s3m tremor (effect I) counter 
         /// </summary>
@@ -244,7 +243,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-        
+
         /// <summary>
         /// s3m tremor ontime/offtime
         /// </summary>
@@ -253,7 +252,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-            
+
         /// <summary>
         /// last used volslide
         /// </summary>
@@ -262,7 +261,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-        
+
         /// <summary>
         /// last used retrig speed 
         /// </summary>
@@ -271,7 +270,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-      
+
         /// <summary>
         /// last used retrig slide
         /// </summary>
@@ -280,7 +279,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-               
+
         /// <summary>
         /// glissando (0 means off) 
         /// </summary>
@@ -295,7 +294,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-              
+
         /// <summary>
         /// current vibrato position
         /// </summary>
@@ -304,7 +303,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-     
+
         /// <summary>
         /// current vibrato speed
         /// </summary>
@@ -313,7 +312,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-   
+
         /// <summary>
         /// current vibrato depth
         /// </summary>
@@ -322,7 +321,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-              
+
         /// <summary>
         /// current tremolo position
         /// </summary>
@@ -331,7 +330,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-      
+
         /// <summary>
         /// current tremolo speed
         /// </summary>
@@ -340,7 +339,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-       
+
         /// <summary>
         /// current tremolo depth
         /// </summary>
@@ -349,7 +348,7 @@ namespace SharpMod.Player
             get;
             set;
         }
-              
+
         /// <summary>
         /// last used sample-offset (effect 9)
         /// </summary>
@@ -357,12 +356,12 @@ namespace SharpMod.Player
         {
             get;
             set;
-        }		
+        }
 
         public ChannelMemory()
-		{
-			VolEnv = new EnvPr();
-			PanEnv = new EnvPr();
-		}
-	}
+        {
+            VolEnv = new EnvPr();
+            PanEnv = new EnvPr();
+        }
+    }
 }

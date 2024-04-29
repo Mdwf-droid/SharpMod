@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using SharpMod.UniTracker;
-using SharpMod.Song;
-using SharpMod;
+﻿using SharpMod.Song;
+using SharpMod.SoundRenderer;
+using System;
 using System.IO;
+using System.Text;
 
 
 namespace SharpMod.Win.CommandLine.Demo
 {
-    class Program
-    {  
+    internal static class Program
+    {
         static SongModule myMod = null;
 
         static void Main(string[] args)
@@ -25,7 +22,7 @@ namespace SharpMod.Win.CommandLine.Demo
             FileInfo fi = new FileInfo(args[0]);
             if (!fi.Exists)
             {
-                Console.WriteLine( String.Format("File {0} not found"),fi.FullName);
+                Console.WriteLine($"File {fi.FullName} not found");
             }
 
             myMod = ModuleLoader.Instance.LoadModule(fi.FullName);
@@ -34,26 +31,25 @@ namespace SharpMod.Win.CommandLine.Demo
             p.MixCfg.Is16Bits = true;
             p.MixCfg.Interpolate = true;
             p.MixCfg.NoiseReduction = true;
-            SharpMod.SoundRenderer.NAudioWaveChannelDriver drv = new SharpMod.SoundRenderer.NAudioWaveChannelDriver(SharpMod.SoundRenderer.NAudioWaveChannelDriver.Output.WaveOut);
+            var drv = new NAudioWaveChannelDriver(NAudioWaveChannelDriver.Output.WaveOut);
             //SharpMod.SoundRenderer.WaveExporter drv = new SharpMod.SoundRenderer.WaveExporter("test.wav");
             p.RegisterRenderer(drv);
-            p.OnGetPlayerInfos +=new GetPlayerInfosHandler(m_OnGetPlayerInfos);
-            p.OnCurrentModulePlayEnd += new CurrentModulePlayEndHandler(m_OnCurrentModEnded);
+            p.OnGetPlayerInfos += new GetPlayerInfosHandler(m_OnGetPlayerInfos);
+            p.OnCurrentModulePlayEnd += new CurrentModulePlayEndHandler(OnCurrentModEnded);
             p.Start();
 
             Console.Read();
             p.Stop();
         }
 
-        static void m_OnCurrentModEnded(object sender, EventArgs e)
-        { }
+        static void OnCurrentModEnded(object sender, EventArgs e)
+        {
+            throw new NotSupportedException();
+        }
 
-        static int ctr = 0;
         static int lastp = -1;
         static void m_OnGetPlayerInfos(object sender, SharpMod.SharpModEventArgs e)
-        {         
-            ctr = 0;
-
+        {
             if (Console.WindowHeight != 71)
             {
                 Console.CursorVisible = false;
@@ -66,12 +62,12 @@ namespace SharpMod.Win.CommandLine.Demo
             for (int i = 0; i < myMod.Patterns[e.SongPosition].RowsCount; i++)
             {
                 Console.SetCursorPosition(0, i);
-                if(e.PatternPosition == i)
+                if (e.PatternPosition == i)
                     Console.Write(">");
                 else
-                    Console.Write(" ");                
+                    Console.Write(" ");
             }
-           
+
 
             if (lastp != e.SongPosition)
             {

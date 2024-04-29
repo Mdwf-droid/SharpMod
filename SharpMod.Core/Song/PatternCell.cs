@@ -1,19 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.ComponentModel;
+using System.Text;
+
 
 namespace SharpMod.Song
 {
 
     public class PatternCell : INotifyPropertyChanged
     {
-        static readonly string[] ReadableNotes = new string[] { "C ", "C#", "D ", "D#", "E ", "F ", "F#", "G ", "G#", "A ", "A#", "B " };
+        static readonly string[] ReadableNotes = ["C ", "C#", "D ", "D#", "E ", "F ", "F#", "G ", "G#", "A ", "A#", "B "];
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private Track _parentTrack;
-
+       
         private short _period;
         public short Period
         {
@@ -22,8 +21,8 @@ namespace SharpMod.Song
             {
                 if (_period == value)
                     return;
-                _period = value; 
-                OnPropertyChanged(new PropertyChangedEventArgs("Period"));
+                _period = value;
+                OnPropertyChanged(new PropertyChangedEventArgs(nameof(Period)));
             }
         }
 
@@ -36,7 +35,7 @@ namespace SharpMod.Song
                 if (_note == value)
                     return;
                 _note = value;
-                OnPropertyChanged(new PropertyChangedEventArgs("Note"));
+                OnPropertyChanged(new PropertyChangedEventArgs(nameof(Note)));
             }
         }
 
@@ -49,7 +48,7 @@ namespace SharpMod.Song
                 if (_octave == value)
                     return;
                 _octave = value;
-                OnPropertyChanged(new PropertyChangedEventArgs("Octave"));
+                OnPropertyChanged(new PropertyChangedEventArgs(nameof(Octave)));
             }
         }
 
@@ -62,7 +61,7 @@ namespace SharpMod.Song
                 if (_instrument == value)
                     return;
                 _instrument = value;
-                OnPropertyChanged(new PropertyChangedEventArgs("Instrument"));
+                OnPropertyChanged(new PropertyChangedEventArgs(nameof(Instrument)));
             }
         }
 
@@ -75,7 +74,7 @@ namespace SharpMod.Song
                 if (_effect == value)
                     return;
                 _effect = value;
-                OnPropertyChanged(new PropertyChangedEventArgs("Effect"));
+                OnPropertyChanged(new PropertyChangedEventArgs(nameof(Effect)));
             }
         }
 
@@ -88,25 +87,23 @@ namespace SharpMod.Song
                 if (_effectData == value)
                     return;
                 _effectData = value;
-                OnPropertyChanged(new PropertyChangedEventArgs("EffectData"));
+                OnPropertyChanged(new PropertyChangedEventArgs(nameof(EffectData)));
             }
         }
 
         public PatternCell(Track parentTrack)
-        {
-            _parentTrack = parentTrack;
-            _parentTrack.RegisterPatternCellEvent(this);
-            
+        {            
+            parentTrack?.RegisterPatternCellEvent(this);
         }
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.Append((Note != null) ? ReadableNotes[(int)Note] : "--");
-            sb.Append((Note != null) ? ((Octave + 1).ToString() ) : "-");
-            sb.Append(" ");
+            sb.Append((Note != null) ? ((Octave + 1).ToString()) : "-");
+            sb.Append(' ');
             sb.Append((Instrument != 0) ? String.Format("{0:00}", Instrument) : "--");
-            sb.Append(" ");
+            sb.Append(' ');
             sb.Append(Effect != 0 ? String.Format("{0:X2}", Effect) : "--");
             sb.Append(Effect != 0 ? String.Format("{0:X2}", EffectData) : "--");
             return sb.ToString();
@@ -114,8 +111,7 @@ namespace SharpMod.Song
 
         protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
         {
-            if (this.PropertyChanged != null)
-                this.PropertyChanged(this, e);
+            PropertyChanged?.Invoke(this, e);
         }
     }
 }

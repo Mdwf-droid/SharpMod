@@ -1,23 +1,9 @@
-using System;
-
 namespace SharpMod.Player
-{	
-	public class EnvPt
-	{
-        private short _pos;
+{
+    public class EnvPt
+    {
+        public short Pos { get; set; }
 
-        public short Pos
-        {
-            get { return _pos; }
-            set { _pos = value; }
-        }
-
-        private short _val;
-
-        public short Val
-        {
-            get { return _val; }
-            set { _val = value; }
-        }
-	}
+        public short Val { get; set; }
+    }
 }

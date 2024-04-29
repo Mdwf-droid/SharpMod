@@ -1,39 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NAudio.Wave;
-using SharpMod.Mixer;
+﻿using NAudio.Wave;
 
 namespace SharpMod.SoundRenderer
 {
     class NAudioTrackerStream : NAudio.Wave.WaveStream
-    {        
-        private WaveFormat waveFormat;
+    {
+        private readonly WaveFormat waveFormat;
         internal ModulePlayer Player { get; set; }
 
         public NAudioTrackerStream(ModulePlayer player)
         {
             Player = player;
-            waveFormat = new WaveFormat(Player.MixCfg.Rate, Player.MixCfg.Is16Bits?16:8,(Player.MixCfg.Style == SharpMod.Player.RenderingStyle.Mono)?1:2);
+            waveFormat = new WaveFormat(Player.MixCfg.Rate, Player.MixCfg.Is16Bits ? 16 : 8, (Player.MixCfg.Style == SharpMod.Player.RenderingStyle.Mono) ? 1 : 2);
         }
 
         public override long Position
         {
-            get { return 0; }
-            set { ;}
-            /*{
-                return _mixer.idxlpos;
-            }
+            get;
             set;
-            {
-                _mixer.idxlpos = (int)value;
-            }*/
+
         }
 
         public override long Length
         {
-            get { return 0; }// { return _mixer.idxsize; }
+            get { return 0; }
         }
 
         public override WaveFormat WaveFormat
@@ -43,10 +32,8 @@ namespace SharpMod.SoundRenderer
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            int readed = 0;
-            //byte[] tmpBuffer = new sbyte[count];
-            readed = Player.GetBytes(buffer, count);
-            //Buffer.BlockCopy(tmpBuffer, 0, buffer, 0, readed);
+            var readed = Player.GetBytes(buffer, count);
+            Position += readed;
             return readed;
         }
     }

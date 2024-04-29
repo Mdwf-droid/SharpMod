@@ -1,17 +1,17 @@
-﻿using System;
-using SharpMod.IO;
+﻿using SharpMod.IO;
+using System;
 
 namespace SharpMod
 {
     ///<summary>
     ///</summary>
     public class SampleLoader
-    {        
+    {
         private ModBinaryReader _reader;
-        private SampleFormatFlags _inputFormat;
-        private SampleFormatFlags _outputFormat;
+        private SampleFormats _inputFormat;
+        private SampleFormats _outputFormat;
         private short _old;
-        private short[] _buffer;
+        private readonly short[] _buffer;
 
         ///<summary>
         ///</summary>
@@ -25,7 +25,7 @@ namespace SharpMod
         ///<param name="reader"></param>
         ///<param name="inputFormat"></param>
         ///<param name="outputFormat"></param>
-        public virtual void Init(ModBinaryReader reader, SampleFormatFlags inputFormat, SampleFormatFlags outputFormat)
+        public virtual void Init(ModBinaryReader reader, SampleFormats inputFormat, SampleFormats outputFormat)
         {
             _old = 0;
             _reader = reader;
@@ -43,7 +43,7 @@ namespace SharpMod
             var out_index = offset;
 
             // compute number of samples to load 
-            if ((_outputFormat & SampleFormatFlags.SF_16BITS) != 0)
+            if ((_outputFormat & SampleFormats.SF_16BITS) != 0)
                 length >>= 1;
 
             while (length != 0)
@@ -52,33 +52,33 @@ namespace SharpMod
                 var stodo = (short)((length < 1024) ? length : 1024);
 
                 int t;
-                if ((_inputFormat & SampleFormatFlags.SF_16BITS) != 0)
+                if ((_inputFormat & SampleFormats.SF_16BITS) != 0)
                 {
-                    if ((_inputFormat & SampleFormatFlags.SF_BIG_ENDIAN) != 0)                        
-                        _reader.readMotorolaSWords(_buffer, stodo);
-                    else                        
-                        _reader.readIntelSWords(_buffer, stodo);
+                    if ((_inputFormat & SampleFormats.SF_BIG_ENDIAN) != 0)
+                        _reader.ReadMotorolaSWords(_buffer, stodo);
+                    else
+                        _reader.ReadIntelSWords(_buffer, stodo);
                 }
                 else
                 {
 
                     var byte_buffer = new sbyte[stodo];
-                    
+
                     try
-                    {                        
+                    {
                         _reader.Read((byte[])(Array)byte_buffer, 0, stodo);
                     }
                     catch (System.IO.IOException)
                     {
+                        // do nothing...
                     }
                     for (t = 0; t < stodo; t++)
                     {
-                        _buffer[t] = (short)((byte_buffer[t] << 8));
+                        _buffer[t] = (short)(byte_buffer[t] << 8);
                     }
-                    byte_buffer = null;
                 }
 
-                if ((_inputFormat & SampleFormatFlags.SF_DELTA) != 0)
+                if ((_inputFormat & SampleFormats.SF_DELTA) != 0)
                 {
                     for (t = 0; t < stodo; t++)
                     {
@@ -87,7 +87,7 @@ namespace SharpMod
                     }
                 }
 
-                if (((_inputFormat ^ _outputFormat) & SampleFormatFlags.SF_SIGNED) != 0)
+                if (((_inputFormat ^ _outputFormat) & SampleFormats.SF_SIGNED) != 0)
                 {
                     for (t = 0; t < stodo; t++)
                     {
@@ -95,7 +95,7 @@ namespace SharpMod
                     }
                 }
 
-                if ((_outputFormat & SampleFormatFlags.SF_16BITS) != 0)
+                if ((_outputFormat & SampleFormats.SF_16BITS) != 0)
                 {
                     for (t = 0; t < stodo; t++)
                     {

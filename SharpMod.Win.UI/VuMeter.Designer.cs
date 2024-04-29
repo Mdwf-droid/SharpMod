@@ -48,7 +48,7 @@ namespace SharpMod.Win.UI
             // 
             // timerRefresh
             // 
-            this.timerRefresh.Tick += new System.EventHandler(this.timerRefresh_Tick);
+            this.timerRefresh.Tick += new System.EventHandler(this.TimerRefresh_Tick);
             // 
             // VuMeter
             // 

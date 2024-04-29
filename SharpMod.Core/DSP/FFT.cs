@@ -9,7 +9,7 @@ namespace SharpMod.DSP
     /// * @author Daniel Becker
     /// * @since 30.09.2007 </summary>
     /// 
-    public class FFT
+    public class Fft
     {
         private const int FRAC_BITS = 16;
         private const int FRAC_FAC = 1 << FRAC_BITS;
@@ -27,7 +27,7 @@ namespace SharpMod.DSP
         ///	
         ///	 <summary> * Constructor for FFT </summary>
         ///	 
-        public FFT(int pSampleSize)
+        public Fft(int pSampleSize)
         {
             ss = pSampleSize;
             ss2 = ss >> 1;
@@ -43,7 +43,7 @@ namespace SharpMod.DSP
 
             fftBr = new int[ss];
 
-            prepareFFTTables();
+            PrepareFFTTables();
         }
 
         ///	
@@ -51,7 +51,7 @@ namespace SharpMod.DSP
         ///	 * and all other things we can store
         ///	 * @since 03.10.2007 </summary>
         ///	 
-        private void prepareFFTTables()
+        private void PrepareFFTTables()
         {
             int n2 = ss2;
             int nu1 = nu - 1;
@@ -63,7 +63,7 @@ namespace SharpMod.DSP
                 {
                     for (int i = 1; i <= n2; i++)
                     {
-                        double p = (double)bitrev(k >> nu1, nu);
+                        double p = (double)BitRev(k >> nu1, nu);
                         double arg = (Math.PI * p * 2.0D) / (double)ss;
                         fftSin[x] = (long)(Math.Sin(arg) * FRAC_FAC);
                         fftCos[x] = (long)(Math.Cos(arg) * FRAC_FAC);
@@ -79,7 +79,7 @@ namespace SharpMod.DSP
             }
 
             for (k = 0; k < ss; k++)
-                fftBr[k] = bitrev(k, nu);
+                fftBr[k] = BitRev(k, nu);
         }
 
         ///	
@@ -88,7 +88,7 @@ namespace SharpMod.DSP
         ///	 * <param name="value">
         ///	 * @return </param>
         ///	 
-        private static long longSqrt(long value)
+        private static long LongSqrt(long value)
         {
             const int scale = 8;
             int bits = 64;
@@ -116,7 +116,7 @@ namespace SharpMod.DSP
 
             return sqrt;
         }
-        private static int bitrev(int j, int nu)
+        private static int BitRev(int j, int nu)
         {
             int j1 = j;
             int k = 0;
@@ -136,26 +136,28 @@ namespace SharpMod.DSP
         ///	 * @since 03.10.2007 </summary>
         ///	 * <param name="pSample">
         ///	 * @return </param>
-        public virtual float[] calculate(float[] pSample)
+        public virtual float[] Calculate(float[] pSample)
         {
             int wAps = pSample.Length / ss;
             int n2 = ss2;
             int nu1 = nu - 1;
             int a = 0;
 
-            for (int b = 0; a < pSample.Length; b++)
+            var b = 0;
+            while (a < pSample.Length)            
             {
                 xre[b] = (long)(pSample[a] * FRAC_FAC);
                 xim[b] = 0;
                 a += wAps;
+                b++;
             }
 
-            int x = 0;
-            for (int l = 1; l <= nu; l++)
+            var x = 0;
+            for (var l = 1; l <= nu; l++)
             {
-                for (int k = 0; k < ss; k += n2)
+                for (var k = 0; k < ss; k += n2)
                 {
-                    for (int i = 1; i <= n2; i++)
+                    for (var i = 1; i <= n2; i++)
                     {
 
                         long c = fftCos[x];
@@ -198,9 +200,9 @@ namespace SharpMod.DSP
                 }
             }
 
-            mag[0] = ((float)((longSqrt(xre[0] * xre[0] + xim[0] * xim[0])) >> FRAC_BITS)) / ((float)ss);
+            mag[0] = ((float)((LongSqrt(xre[0] * xre[0] + xim[0] * xim[0])) >> FRAC_BITS)) / ((float)ss);
             for (int i = 1; i < ss2; i++)
-                mag[i] = ((float)((longSqrt(xre[i] * xre[i] + xim[i] * xim[i]) << 1) >> FRAC_BITS)) / ((float)ss);
+                mag[i] = ((float)((LongSqrt(xre[i] * xre[i] + xim[i] * xim[i]) << 1) >> FRAC_BITS)) / ((float)ss);
 
             return mag;
         }

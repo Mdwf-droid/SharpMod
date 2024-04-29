@@ -1,22 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿
 using SharpMod.UniTracker;
+using System.Collections.Generic;
 
 namespace SharpMod.Song
 {
     internal class UniTrkHelper
     {
-        private object locker=new object();
+        private readonly object locker = new();
         private static UniTrkHelper _instance;
 
         public static UniTrkHelper Instance
         {
             get
             {
-                if (_instance == null)
-                    _instance = new UniTrkHelper();
+                _instance ??= new UniTrkHelper();
                 return _instance;
             }
         }
@@ -29,32 +26,30 @@ namespace SharpMod.Song
         {
             lock (locker)
             {
-                UniTrk trk = new UniTrk();
-
-                //trk.UniReset();
+                UniTrk trk = new();
+                               
                 trk.UniInit();
                 trk.UniReset();
-                //int n_ptr = offset;
+               
                 foreach (PatternCell pc in track.Cells)
                 {
                     if (pc == null)
                         continue;
                     if (pc.Instrument != 0)
-                        trk.UniInstrument((short)(pc.Instrument));
+                        trk.UniInstrument(pc.Instrument);
 
                     if (pc.Period != 0 && pc.Note != null)
-                        trk.UniNote((short)(pc.Period));
+                        trk.UniNote(pc.Period);
 
                     if (pc.Effect > 0)
-                        trk.UniPTEffect((short)(pc.Effect /*- 3*/), pc.EffectData);
+                        trk.UniPTEffect(pc.Effect /*- 3*/, pc.EffectData);
 
                     trk.UniNewline();
 
                 }
 
                 return trk.UniDup();
-            }
-            //track.UniModSong.Tracks[track.TrackNumber + (track.PatternNumber * track.UniModSong.NumChn)] = trk.UniDup();
+            }           
         }
 
         /// <summary>
@@ -62,13 +57,13 @@ namespace SharpMod.Song
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        internal void fromUniTrk(Track track)
+        internal void FromUniTrk(Track track)
         {
             lock (locker)
             {
-                UniTrk trk = new UniTrk();
+                UniTrk trk = new();
 
-                List<PatternCell> lpc = new List<PatternCell>();
+                List<PatternCell> lpc = [];
                 for (int r = 0; r < track.Cells.Count; r++)
                 {
                     // Avoid if unitrack is empty
@@ -102,10 +97,7 @@ namespace SharpMod.Song
                                 break;
 
                             case Effects.UNI_INSTRUMENT:
-                                inst = trk.UniGetByte();
-                                //if (inst >= uniMod.NumIns)
-                                //break; /* <- safety valve */
-
+                                inst = trk.UniGetByte();                               
                                 break;
                             default:
                                 effect = (short)c;
@@ -115,13 +107,15 @@ namespace SharpMod.Song
                         }
                     }
 
-                    PatternCell pc = new PatternCell(track);
-                    pc.Period = (short)note;
-                    pc.Note = RealNote;
-                    pc.Octave = octave;
-                    pc.Instrument = (short)(inst + 1);
-                    pc.Effect = (short)(effect - 3);
-                    pc.EffectData = (short)effectData;
+                    PatternCell pc = new(track)
+                    {
+                        Period = note,
+                        Note = RealNote,
+                        Octave = octave,
+                        Instrument = (short)(inst + 1),
+                        Effect = (short)(effect - 3),
+                        EffectData = effectData
+                    };
                     lpc.Add(pc);
                 }
 

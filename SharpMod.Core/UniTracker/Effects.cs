@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SharpMod.UniTracker
+﻿namespace SharpMod.UniTracker
 {
     /// <summary>
     ///	all known effects:
