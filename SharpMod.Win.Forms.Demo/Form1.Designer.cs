@@ -219,7 +219,7 @@
             chkLoop.TabIndex = 17;
             chkLoop.Text = "Loop";
             chkLoop.UseVisualStyleBackColor = true;
-            chkLoop.CheckedChanged += chkLoop_CheckedChanged;
+            chkLoop.CheckedChanged += ChkLoop_CheckedChanged;
             // 
             // vuMeterRight
             // 
@@ -256,7 +256,7 @@
             listView1.TabIndex = 19;
             listView1.UseCompatibleStateImageBehavior = false;
             listView1.View = System.Windows.Forms.View.Details;
-            listView1.SelectedIndexChanged += listView1_SelectedIndexChanged;
+            listView1.SelectedIndexChanged += ListView1_SelectedIndexChanged;
             // 
             // Form1
             // 

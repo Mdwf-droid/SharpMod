@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "SharpMod.Win.CommandLine.Demo": {
+      "commandName": "Project"
+    },
+    "Profil 1": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Users\\PBRI05211\\Downloads\\girl_from_zamardi.xm\""
+    }
+  }
+}

@@ -1,0 +1,225 @@
+﻿<Window
+    x:Class="SharpMod.Wpf.UI.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:NmSlUi="clr-namespace:SharpMod.Wpf.UI.UserControls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:SharpMod.Wpf.UI"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="SharpMod.Wpf.UI"
+    Width="500"
+    Height="400"
+    ResizeMode="NoResize"
+    mc:Ignorable="d">
+    <Grid x:Name="LayoutRoot" Background="Black">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30" />
+            <RowDefinition Height="120" />
+            <RowDefinition Height="120" />
+            <RowDefinition Height="70" />
+
+        </Grid.RowDefinitions>
+
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal">
+            <Border
+                Padding="4"
+                BorderBrush="Gray"
+                BorderThickness="1">
+                <StackPanel Orientation="Vertical">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock
+                            Margin="4"
+                            Foreground="White"
+                            Text="Position :" />
+
+                        <NmSlUi:LedPresenter
+                            x:Name="LblTrackPos"
+                            Background="Black"
+                            DigitCount="7"
+                            FontSize="20"
+                            Foreground="Aqua" />
+                   
+                        <TextBlock
+                            Margin="4"
+                            Foreground="White"
+                            Text="Pattern :" />
+
+                        <NmSlUi:LedPresenter
+                            x:Name="LblPatPos"
+                            Background="Black"
+                            DigitCount="3"
+                            FontSize="20"
+                            Foreground="Aqua" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <Border
+                Padding="4"
+                BorderBrush="Gray"
+                BorderThickness="1">
+                <StackPanel Orientation="Vertical">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock
+                            Margin="4"
+                            Foreground="White"
+                            Text="Bpm :" />
+                        <NmSlUi:LedPresenter
+                            x:Name="LblBpm"
+                            Background="Black"
+                            DigitCount="3"
+                            FontSize="20"
+                            Foreground="Aqua" />
+                        <Slider
+                            x:Name="BpmSlide"
+                            Width="150"
+                            Margin="4"
+                            LargeChange="0.5"
+                            Maximum="2"
+                            Minimum="0"
+                            SmallChange="0.05"
+                            ValueChanged="BpmSlide_ValueChanged" />
+                    </StackPanel>
+
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+
+        <StackPanel
+            Grid.Row="1"
+            Margin="6"
+            Orientation="Horizontal">
+            <Border
+                Padding="4"
+                BorderBrush="Gray"
+                BorderThickness="1">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Foreground="White" Text="Left" />
+                    <NmSlUi:VuMeter
+                        x:Name="VuMeterLeft"
+                        Width="180"
+                        Height="100"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch" />
+                </StackPanel>
+            </Border>
+            <StackPanel Margin="5" Orientation="Vertical">
+                <TextBlock Foreground="White" Text="VuMeter Style :" />
+                <ToggleButton
+                    x:Name="VuMeterStyle"
+                    Click="VuMeterStyle_Checked"
+                    Content="Spectrum" />
+            </StackPanel>
+            <Border
+                Padding="4"
+                BorderBrush="Gray"
+                BorderThickness="1">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Foreground="White" Text="Right" />
+                    <NmSlUi:VuMeter
+                        x:Name="VuMeterRight"
+                        Width="180"
+                        Height="100"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <Button
+                x:Name="btnOpen"
+                Width="50"
+                Click="btnOpen_Click"
+                Content="Open" />
+            <Button
+                x:Name="btnStart"
+                Width="50"
+                Click="btnStart_Click"
+                Content="Play" />
+            <Button
+                x:Name="btnStop"
+                Width="50"
+                Click="btnStop_Click"
+                Content="Stop" />
+
+        </StackPanel>
+        <!--<CheckBox x:Name="CheckNoVuMeter" Click="CheckNoVuMeter_Click" Content="No VuMeter" Grid.Row="2" Grid.Column="0"></CheckBox>-->
+        <StackPanel
+            Grid.Row="2"
+            Margin="5"
+            Orientation="Vertical">
+            <Grid Background="Transparent">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="115" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="25" />
+                    <RowDefinition Height="25" />
+                    <RowDefinition Height="25" />
+                    <RowDefinition Height="25" />
+                </Grid.RowDefinitions>
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Background="Transparent"
+                    Foreground="White">
+                    Title :
+                </Label>
+                <NmSlUi:LedPresenter
+                    x:Name="LblTrackNfo0"
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Background="Black"
+                    DigitCount="42"
+                    FontSize="18"
+                    Foreground="Aqua" />
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Foreground="White">
+                    Channels :
+                </Label>
+                <NmSlUi:LedPresenter
+                    x:Name="LblTrackNfo1"
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Background="Black"
+                    DigitCount="42"
+                    FontSize="18"
+                    Foreground="Aqua" />
+                <Label
+                    Grid.Row="2"
+                    Grid.Column="0"
+                    Foreground="White">
+                    Base BPM :
+                </Label>
+                <NmSlUi:LedPresenter
+                    x:Name="LblTrackNfo2"
+                    Grid.Row="2"
+                    Grid.Column="1"
+                    Background="Black"
+                    DigitCount="42"
+                    FontSize="18"
+                    Foreground="Aqua" />
+                <Label
+                    Grid.Row="3"
+                    Grid.Column="0"
+                    Foreground="White">
+                    Tracker :
+                </Label>
+                <NmSlUi:LedPresenter
+                    x:Name="LblTrackNfo3"
+                    Grid.Row="3"
+                    Grid.Column="1"
+                    Background="Black"
+                    DigitCount="42"
+                    FontSize="18"
+                    Foreground="Aqua" />
+            </Grid>
+
+        </StackPanel>
+    </Grid>
+</Window>

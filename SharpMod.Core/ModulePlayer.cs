@@ -126,11 +126,13 @@ namespace SharpMod
             if (OnGetPlayerInfos == null)
                 return;
 
+            var currentPatternNumber = PlayerInstance.CurrentUniMod.Positions[PlayerInstance.MpSngPos];
             var sme = new SharpModEventArgs
             {
-                PatternNumber = PlayerInstance.CurrentUniMod.Positions[PlayerInstance.MpSngPos],
+                PatternNumber = currentPatternNumber,
                 SongPosition = PlayerInstance.MpSngPos,
-                PatternPosition = PlayerInstance.MpPatpos
+                PatternPosition = PlayerInstance.MpPatpos,
+                CurrentPatternPositionsCount = PlayerInstance.CurrentUniMod.Patterns[currentPatternNumber].RowsCount
             };
 
             OnGetPlayerInfos?.Invoke(this, sme);
@@ -180,8 +182,7 @@ namespace SharpMod
                 IsPlaying = false;
                 Pause();
                
-                SoundRenderer.PlayStop();
-                //ChannelsMixer.VC_PlayStop();
+                SoundRenderer.PlayStop();               
             }
         }
 

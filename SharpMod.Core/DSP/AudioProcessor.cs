@@ -1,11 +1,3 @@
-
-/* Modification non fusionnée à partir du projet 'SharpMod.Core'
-Avant :
-using System;
-Après :
-using SharpMod.Mixer;
-using System;
-*/
 using SharpMod.Mixer;
 using System;
 
@@ -53,7 +45,7 @@ namespace SharpMod.DSP
             ///		 
             public void Run()
             {
-                int currentReadPosition = (int)(((me.internalFramePosition * me.channels) % me.sampleBufferSize));
+                int currentReadPosition = (int)(me.internalFramePosition * me.channels % me.sampleBufferSize);
                 for (int i = 0; i < me.desiredBufferSize; i++)
                 {
                     if (currentReadPosition >= me.sampleBufferSize)
@@ -142,7 +134,8 @@ namespace SharpMod.DSP
                         int rest = sampleBufferSize - currentWritePosition;
                         Array.Copy(newSampleData, offset, sampleBuffer, currentWritePosition, rest);
                         //TODO : there is a bug here...
-                        Array.Copy(newSampleData, offset + rest, sampleBuffer, 0, currentWritePosition = length - rest);
+                        currentWritePosition = length - rest;
+                        Array.Copy(newSampleData, offset + rest, sampleBuffer, 0, currentWritePosition);
                     }
                     else
                     {
@@ -153,7 +146,7 @@ namespace SharpMod.DSP
             }
             catch
             {
-
+                //do nothing
             }
         }
 

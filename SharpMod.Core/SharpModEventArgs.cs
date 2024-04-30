@@ -18,6 +18,8 @@ namespace SharpMod
 
         public int PatternNumber { get; set; }
 
+        public int CurrentPatternPositionsCount { get; set; }
+
         private Dictionary<int, ChannelMemory> _audioValues;
 
         ///<summary>

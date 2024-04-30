@@ -35,7 +35,7 @@ namespace AdvancedNetModTest
             vuMeterRight.Process(rightSample);
         }
 
-        void player_OnGetPlayerInfos(object sender, SharpModEventArgs e)
+        void Player_OnGetPlayerInfos(object sender, SharpModEventArgs e)
         {
             if (InvokeRequired && !IsDisposed)
             {
@@ -133,7 +133,7 @@ namespace AdvancedNetModTest
                 Player.RegisterRenderer(drv);
                 Player.DspAudioProcessor = new AudioProcessor(1024, 50);
                 Player.DspAudioProcessor.OnCurrentSampleChanged += DspAudioProcessor_OnCurrentSampleChanged;
-                Player.OnGetPlayerInfos += player_OnGetPlayerInfos;
+                Player.OnGetPlayerInfos += Player_OnGetPlayerInfos;
                 var sb = new StringBuilder();
 
                 sb.AppendLine(String.Format("Mod Name: {0}", MyMod.SongName));
@@ -150,25 +150,16 @@ namespace AdvancedNetModTest
             }
         }
 
-        private void chkLoop_CheckedChanged(object sender, EventArgs e)
+        private void ChkLoop_CheckedChanged(object sender, EventArgs e)
         {
             Player.PlayerInstance.MpLoop = chkLoop.Checked;
         }
 
-        private void listView1_SelectedIndexChanged(object sender, EventArgs e)
+        private void ListView1_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (listView1.SelectedIndices.Count > 0)
                 Player.PlayerInstance.MpSngPos = (short)listView1.SelectedIndices[0];
         }
-
-        /*   protected override void OnClosed(EventArgs e)
-           {
-
-               if (Player != null)
-               {
-                   Player.Dispose();
-               }
-               base.OnClosed(e);
-           }*/
+               
     }
 }

@@ -31,7 +31,7 @@ namespace SharpMod.Win.CommandLine.Demo
             p.MixCfg.Is16Bits = true;
             p.MixCfg.Interpolate = true;
             p.MixCfg.NoiseReduction = true;
-            var drv = new NAudioWaveChannelDriver(NAudioWaveChannelDriver.Output.WaveOut);
+            var drv = new NAudioWaveChannelDriver(NAudioWaveChannelDriver.Output.DirectSound);
             //SharpMod.SoundRenderer.WaveExporter drv = new SharpMod.SoundRenderer.WaveExporter("test.wav");
             p.RegisterRenderer(drv);
             p.OnGetPlayerInfos += new GetPlayerInfosHandler(m_OnGetPlayerInfos);
@@ -50,23 +50,23 @@ namespace SharpMod.Win.CommandLine.Demo
         static int lastp = -1;
         static void m_OnGetPlayerInfos(object sender, SharpMod.SharpModEventArgs e)
         {
-            if (Console.WindowHeight != 71)
+            if (Console.WindowHeight != myMod.Patterns[e.SongPosition].RowsCount)
             {
                 Console.CursorVisible = false;
-                Console.WindowHeight = 65;
+                Console.WindowHeight = myMod.Patterns[e.SongPosition].RowsCount;
                 Console.BufferWidth = 600;
             }
 
 
 
-            for (int i = 0; i < myMod.Patterns[e.SongPosition].RowsCount; i++)
+            /*for (int i = 0; i < myMod.Patterns[e.SongPosition].RowsCount; i++)
             {
                 Console.SetCursorPosition(0, i);
                 if (e.PatternPosition == i)
                     Console.Write(">");
                 else
                     Console.Write(" ");
-            }
+            }*/
 
 
             if (lastp != e.SongPosition)

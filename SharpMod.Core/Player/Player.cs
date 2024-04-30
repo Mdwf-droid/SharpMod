@@ -2516,6 +2516,8 @@ namespace SharpMod.Player
                 b = t.EnvIdxB;
                 p = t.CurrentCounter;
 
+                if (b >= t.EnvPoints.Length) b = (short)(t.EnvPoints.Length - 1);
+                if (a >= t.EnvPoints.Length) a = (short)(t.EnvPoints.Length - 1);
                 /* compute the envelope value between points a and b */
                 v = InterpolateEnv((short)p, t.EnvPoints[a], t.EnvPoints[b]);
 
@@ -2569,9 +2571,9 @@ namespace SharpMod.Player
         {
             int okt;
             int frequency;
-            period = 7680 - period;
-            okt = period / 768;
-            frequency = lintab[period % 768];
+            var tabPeriod = Math.Abs( 7680 - period);
+            okt = tabPeriod / 768;
+            frequency = lintab[tabPeriod % 768];
             frequency <<= 2;
             return (frequency >> (7 - okt));
         }
