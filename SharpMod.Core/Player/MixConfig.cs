@@ -1,5 +1,5 @@
 ﻿namespace SharpMod.Player
-{   
+{
 
     public class MixConfig
     {

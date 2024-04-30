@@ -69,7 +69,7 @@ namespace SharpMod.Song
         /// restart position 
         /// </summary>
         public short RepPos { get; set; }
-               
+
 
         ///<summary>
         /// Default Constructor
@@ -81,7 +81,7 @@ namespace SharpMod.Song
             Instruments = [];
             Positions = [];
         }
-              
+
 
     }
 }

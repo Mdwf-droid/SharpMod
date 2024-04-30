@@ -16,7 +16,7 @@ namespace SharpMod.SoundRenderer
         }
 
         public ModulePlayer Player { get; set; }
-        private readonly Output _output = output;        
+        private readonly Output _output = output;
 
         NAudioTrackerStream _naudioTrackerStream;
         IWavePlayer waveOut;
@@ -53,7 +53,7 @@ namespace SharpMod.SoundRenderer
                      var outputDevice= new WaveOut(callbackInfo) {DesiredLatency = Latency}
                      waveOut = outputDevice                    */
                     throw new NotImplementedException();
-                    
+
                 case Output.DirectSound:
                     waveOut = new DirectSoundOut(Latency);
                     break;
@@ -110,7 +110,7 @@ namespace SharpMod.SoundRenderer
         }
 
         public void Dispose()
-        {          
+        {
             Dispose(true);
             GC.SuppressFinalize(this);
         }

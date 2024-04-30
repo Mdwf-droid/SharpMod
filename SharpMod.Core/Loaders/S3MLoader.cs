@@ -155,10 +155,10 @@ namespace SharpMod.Loaders
                         ch = flag & 31;
 
                         if (mh.Channels[ch] < 16)
-                        {                           
+                        {
                             if ((flag & 32) != 0)
-                            {                              
-                                s3mbuf[(64 * remap[ch]) + row].Note = Reader.ReadUByte();                                
+                            {
+                                s3mbuf[(64 * remap[ch]) + row].Note = Reader.ReadUByte();
                                 s3mbuf[(64 * remap[ch]) + row].Ins = Reader.ReadUByte();
                             }
 
@@ -225,7 +225,7 @@ namespace SharpMod.Loaders
                         UniTrack.UniNote((short)((((note & 0xF0) >> 4) * 12) + (note & 0xf)));
                     /* <- normal note */
                 }
-                              
+
                 if ((vol < 255) && (vol != -1))
                 {
                     UniTrack.UniPTEffect(0xc, vol);
@@ -388,13 +388,13 @@ namespace SharpMod.Loaders
 
                 /* set module variables */
                 _module.ModType = new System.String(S3M_Version.ToCharArray());
-                _module.SongName = mh.Songname;                
+                _module.SongName = mh.Songname;
                 _module.InitialSpeed = mh.InitSpeed;
                 _module.InitialTempo = mh.InitTempo;
 
                 // count the number this.UniModule channels used
                 _module.ChannelsCount = 0;
-                               
+
                 for (t = 0; t < 32; t++)
                     remap[t] = 0;
                 for (t = 0; t < 16; t++)
@@ -585,7 +585,9 @@ namespace SharpMod.Loaders
         public event AllocPatternsHandler AllocPatterns;
         public event AllocTracksHandler AllocTracks;
         public event AllocInstrumentsHandler AllocInstruments;
+#pragma warning disable CS0067 // L'événement 'S3MLoader.AllocSamples' n'est jamais utilisé
         public event AllocSamplesHandler AllocSamples;
+#pragma warning restore CS0067 // L'événement 'S3MLoader.AllocSamples' n'est jamais utilisé
 
 
 

@@ -45,10 +45,10 @@ namespace AdvancedNetModTest
                     if (!Disposing)
                         Invoke(method, sender, e);
                 }
-                catch(ObjectDisposedException)
+                catch (ObjectDisposedException)
                 {
                     // Do nothing
-                }                
+                }
             }
             else
             {
@@ -160,6 +160,6 @@ namespace AdvancedNetModTest
             if (listView1.SelectedIndices.Count > 0)
                 Player.PlayerInstance.MpSngPos = (short)listView1.SelectedIndices[0];
         }
-               
+
     }
 }

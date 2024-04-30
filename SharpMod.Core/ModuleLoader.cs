@@ -13,7 +13,7 @@ namespace SharpMod
     ///<summary>
     ///</summary>
     public class ModuleLoader
-    {        
+    {
         private ModBinaryReader _reader;
         private readonly SampleLoader _sampleLoader;
         private List<byte[]> _samples;
@@ -70,7 +70,7 @@ namespace SharpMod
         {
             // Retrieve types that implements ILoader interface           
             var loaders = Assembly.GetExecutingAssembly().GetExportedTypes().Where(x => x.GetInterface(typeof(ILoader).FullName, false) != null).ToList();
-            
+
             loaders.ForEach(new Action<Type>(x =>
                 {
                     var loader = (ILoader)Activator.CreateInstance(x);
@@ -133,12 +133,12 @@ namespace SharpMod
             }
 
             if (!LoadHeader(toReturn))
-            {               
+            {
                 throw new SharpModException(SharpModExceptionResources.ERROR_LOADING_HEADER);
             }
 
             if (!LoadSamples(toReturn))
-            {             
+            {
                 throw new SharpModException(SharpModExceptionResources.ERROR_LOADING_SAMPLEINFO);
             }
 
@@ -391,7 +391,7 @@ namespace SharpMod
                 module.Patterns.Add(new Pattern(rowsCount));
             else
                 module.Patterns[numPat] = new Pattern(rowsCount);
-            
+
             return true;
         }
 
@@ -401,7 +401,7 @@ namespace SharpMod
         ///<param name="channelCount"></param>
         ///<returns></returns>
         public static bool AllocTracks(Pattern pat, int channelCount)
-        {            
+        {
             pat.Tracks = new List<Track>(channelCount);
             for (int t = 0; t < channelCount; t++)
             {
@@ -410,7 +410,7 @@ namespace SharpMod
                     UniTrack = []
                 };
                 pat.Tracks.Add(trk);
-            }         
+            }
 
             return true;
         }

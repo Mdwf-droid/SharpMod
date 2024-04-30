@@ -12,7 +12,7 @@ namespace SharpMod.Song
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-       
+
         private short _period;
         public short Period
         {
@@ -92,7 +92,7 @@ namespace SharpMod.Song
         }
 
         public PatternCell(Track parentTrack)
-        {            
+        {
             parentTrack?.RegisterPatternCellEvent(this);
         }
 

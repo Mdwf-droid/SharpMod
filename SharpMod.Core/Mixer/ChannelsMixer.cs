@@ -233,9 +233,9 @@ namespace SharpMod.Mixer
 
         protected internal virtual int Samples2Bytes(int samples)
         {
-            if (MixCfg.Is16Bits) 
+            if (MixCfg.Is16Bits)
                 samples <<= 1;
-            if (MixCfg.Style != RenderingStyle.Mono) 
+            if (MixCfg.Style != RenderingStyle.Mono)
                 samples <<= 1;
             return samples;
         }
@@ -632,7 +632,7 @@ namespace SharpMod.Mixer
                 // Ask a far ptr at the sample address vnf.current at byte offset, and
                 // number of samples shall be valid (BEFORE segment crossing occurs)
                 byte[] sample = WaveTable.Samples[vnf.Handle];
-                if (sample == null)            
+                if (sample == null)
                 {
                     vnf.Current = 0;
                     vnf.Active = false;
@@ -717,7 +717,7 @@ namespace SharpMod.Mixer
                 _audioProcessor.Run();
             }
 
-            if (MixCfg.Is16Bits)                
+            if (MixCfg.Is16Bits)
                 VC_Sample32To16Copy(VC_TICKBUF, buf, buf_offset, MixCfg.Style != RenderingStyle.Mono ? samplesToDo << 1 : samplesToDo, (short)(16 - ampshift));
             else
                 VC_Sample32To8Copy(VC_TICKBUF, buf, buf_offset, MixCfg.Style != RenderingStyle.Mono ? samplesToDo << 1 : samplesToDo, (short)(24 - ampshift));
@@ -793,7 +793,7 @@ namespace SharpMod.Mixer
                             vinf[t].OldLeftVol = vinf[t].LeftVolMul;
                             vinf[t].OldRightVol = vinf[t].RightVolMul;
 
-                                                        
+
                             if (MixCfg.Style == RenderingStyle.Stereo ||
                                MixCfg.Style == RenderingStyle.Surround)
                             {
@@ -987,7 +987,7 @@ namespace SharpMod.Mixer
             // play 1 tick of the module
             OnTickHandler?.Invoke();
 
-            var bpm = OnBPMRequest?.Invoke() ?? 0;                
+            var bpm = OnBPMRequest?.Invoke() ?? 0;
 
             MD_SetBPM(bpm);
         }

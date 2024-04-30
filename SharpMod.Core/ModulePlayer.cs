@@ -63,7 +63,7 @@ namespace SharpMod
                 }
             }
         }
-        
+
         private MixConfig _mixCfg;
         ///<summary>
         ///</summary>
@@ -181,8 +181,8 @@ namespace SharpMod
             {
                 IsPlaying = false;
                 Pause();
-               
-                SoundRenderer.PlayStop();               
+
+                SoundRenderer.PlayStop();
             }
         }
 
@@ -197,7 +197,7 @@ namespace SharpMod
 
         ///<summary>
         ///</summary>
-        public byte[] CurrentBytesWindow { get;private set; }
+        public byte[] CurrentBytesWindow { get; private set; }
         ///<summary>
         ///</summary>
         ///<param name="buffer"></param>

@@ -21,7 +21,9 @@ namespace SharpMod.Wpf.UI
         {
             InitializeComponent();
 
+#pragma warning disable CS8622 // La nullabilité des types référence dans le type du paramètre ne correspond pas au délégué cible (probablement en raison des attributs de nullabilité).
             CompositionTarget.Rendering += new EventHandler(CompositionTarget_Rendering);
+#pragma warning restore CS8622 // La nullabilité des types référence dans le type du paramètre ne correspond pas au délégué cible (probablement en raison des attributs de nullabilité).
             this.BpmSlide.Value = 1.0d;
         }
 

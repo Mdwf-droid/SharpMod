@@ -82,14 +82,14 @@ namespace SharpMod
             w.Write(blockAlign);
             w.Write((short)bits);
             w.Write((short)0);
-            
+
 
             w.Write(DataHeader);
             var dataSizePos = ms.Position;
             w.Write(0); // placeholder
 
             w.Write(Samples[handle], 0, Samples[handle].Length);
-            
+
             w.Flush();
             w.Seek(4, SeekOrigin.Begin);
             w.Write((int)(ms.Length - 8));

@@ -6,7 +6,7 @@ namespace SharpMod
     /// Sample format flags
     /// </summary>
     [Flags]
-    public enum SampleFormats 
+    public enum SampleFormats
     {
         ///<summary>
         ///</summary>

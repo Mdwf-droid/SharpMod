@@ -1,6 +1,5 @@
 ﻿using SharpMod.Exceptions;
 using SharpMod.Song;
-using SharpMod.UniTracker;
 
 namespace SharpMod.Loaders
 {
@@ -218,7 +217,7 @@ namespace SharpMod.Loaders
             _module.ModType = new System.String("15-instrument".ToCharArray());
             //make a cstr m_.MLoader.of songname 
             _module.SongName = mh.SongName;
-            
+
             //_module.numpos = mh.songlength; /* copy the songlength */
 
             // copy the position array 

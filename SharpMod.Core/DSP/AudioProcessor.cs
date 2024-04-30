@@ -95,12 +95,9 @@ namespace SharpMod.DSP
         ///	 * <param name="internalFramePosition"> the internalFramePosition to set
         ///	 * This is the amount of samples written </param>
         ///	 
-        public virtual long InternalFramePosition
+        public virtual void SetInternalFramePosition(long value)
         {
-            set
-            {
-                this.internalFramePosition = value;
-            }
+            this.internalFramePosition = value;
         }
 
         ///	

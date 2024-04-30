@@ -27,10 +27,10 @@ namespace SharpMod.Song
             lock (locker)
             {
                 UniTrk trk = new();
-                               
+
                 trk.UniInit();
                 trk.UniReset();
-               
+
                 foreach (PatternCell pc in track.Cells)
                 {
                     if (pc == null)
@@ -49,7 +49,7 @@ namespace SharpMod.Song
                 }
 
                 return trk.UniDup();
-            }           
+            }
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace SharpMod.Song
                                 break;
 
                             case Effects.UNI_INSTRUMENT:
-                                inst = trk.UniGetByte();                               
+                                inst = trk.UniGetByte();
                                 break;
                             default:
                                 effect = (short)c;

@@ -285,13 +285,13 @@ namespace SharpMod.UniTracker
         /// </summary>
         /// <returns></returns>
         public virtual short[] UniDup()
-        {  
+        {
             UniBuf[UniTT] = 0;
-                       
+
             var d = new short[UniPC];
 
             Array.Copy(UniBuf, d, UniPC);
-           
+
             return d;
         }
 
@@ -320,7 +320,7 @@ namespace SharpMod.UniTracker
         public virtual bool UniInit()
         {
             UniMax = BUFPAGE;
-                      
+
             UniBuf = new short[UniMax];
             return true;
         }

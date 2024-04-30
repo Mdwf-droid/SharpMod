@@ -17,10 +17,12 @@ namespace SharpMod.Loaders
         public event AllocPatternsHandler AllocPatterns;
         public event AllocTracksHandler AllocTracks;
         public event AllocInstrumentsHandler AllocInstruments;
+#pragma warning disable CS0067 // L'événement 'XMLoader.AllocSamples' n'est jamais utilisé
         public event AllocSamplesHandler AllocSamples;
+#pragma warning restore CS0067 // L'événement 'XMLoader.AllocSamples' n'est jamais utilisé
 
         private SongModule _module;
-                
+
         private XMHeader mh;
 
         public String LoaderType
@@ -51,10 +53,10 @@ namespace SharpMod.Loaders
             try
             {
                 var id = new byte[17];
-                
+
                 var szShould = "Extended Module: ";
                 var should_be = UTF8Encoding.UTF8.GetBytes(szShould);
-                
+
                 int a;
                 if (Reader.Read(id, 0, 17) != 17)
                     return false;
@@ -77,12 +79,12 @@ namespace SharpMod.Loaders
             _module = module;
 
             mh = null;
-            
+
             mh = new XMHeader();
 
             mh.version = mh.headersize = mh.restart = mh.tempo = mh.bpm = 0;
             mh.songlength = mh.numchn = mh.numpat = mh.numins = mh.flags = 0;
-                        
+
             mh.orders.Initialize();
 
             return true;
@@ -164,7 +166,7 @@ namespace SharpMod.Loaders
                 if (ins != 0)
                     UniTrack.UniInstrument((short)(ins - 1));
 
-                
+
 
                 switch (vol >> 4)
                 {
@@ -422,7 +424,7 @@ namespace SharpMod.Loaders
                         _module.Patterns[t].Tracks[v].Cells = new List<PatternCell>(new PatternCell[ph.numrows]);
                         _module.Patterns[t].Tracks[v].UniTrack = XM_Convert(xmpat, v * ph.numrows, ph.numrows);
                     }
-                                        
+
                 }
 
                 if (AllocInstruments != null && !AllocInstruments(_module, mh.numins))

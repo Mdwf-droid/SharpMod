@@ -1,14 +1,6 @@
-﻿using System;
-using System.Net;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
-using System.Windows.Ink;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Animation;
-using System.Windows.Shapes;
-using System.ComponentModel;
 
 
 namespace SharpMod.Wpf.UI.UserControls
@@ -21,7 +13,7 @@ namespace SharpMod.Wpf.UI.UserControls
 
         public string? Value { get { return (string)GetValue(ValueProperty); } set { SetValue(ValueProperty, value); } }
 
-       
+
 
         public string? MaskValue
         {
@@ -44,7 +36,7 @@ namespace SharpMod.Wpf.UI.UserControls
         }
 
         public override void OnApplyTemplate()
-        {         
+        {
             Update(this, "");
             base.OnApplyTemplate();
         }

@@ -2,7 +2,6 @@ using SharpMod.Mixer;
 using SharpMod.Song;
 using SharpMod.UniTracker;
 using System;
-using System.Linq;
 
 namespace SharpMod.Player
 {
@@ -2571,7 +2570,7 @@ namespace SharpMod.Player
         {
             int okt;
             int frequency;
-            var tabPeriod = Math.Abs( 7680 - period);
+            var tabPeriod = Math.Abs(7680 - period);
             okt = tabPeriod / 768;
             frequency = lintab[tabPeriod % 768];
             frequency <<= 2;

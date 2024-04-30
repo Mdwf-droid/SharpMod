@@ -71,7 +71,7 @@ namespace SharpMod
             get;
             set;
         }
-       
+
         ///<summary>
         ///</summary>
         ///<param name="module"></param>

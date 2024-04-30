@@ -144,7 +144,7 @@ namespace SharpMod.DSP
             int a = 0;
 
             var b = 0;
-            while (a < pSample.Length)            
+            while (a < pSample.Length)
             {
                 xre[b] = (long)(pSample[a] * FRAC_FAC);
                 xim[b] = 0;

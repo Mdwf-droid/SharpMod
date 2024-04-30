@@ -148,20 +148,7 @@ namespace SharpMod.Wpf.UI.UserControls
                 int barX1 = barX + barWidth - 2;
                 int barHeight = (int)((int)LayoutRoot.ActualHeight * fftLevels[i]);
                 int maxBarHeight = (int)((int)LayoutRoot.ActualHeight * maxFFTLevels[i]);
-                int c = barHeight;
-                /* for (int y = (int)LayoutRoot.ActualHeight - barHeight; y < (int)LayoutRoot.ActualHeight; y++)
-                 {
-                     var line = new Line()
-                     {
-                         Stroke = new SolidColorBrush(color[c--]),
-                         X1 = barX,
-                         X2 = barX1,
-                         Y1 = y,
-                         Y2 = y
-                     };
-                     this.LayoutRoot.Children.Add(line);
 
-                 }*/
                 var brush = new LinearGradientBrush(
                 [
                     new GradientStop(color[barHeight], 0),
@@ -235,9 +222,6 @@ namespace SharpMod.Wpf.UI.UserControls
 
                     int yp = myHalfHeight - (samples[i] * myHalfHeight / MIXERMAXSAMPLE);
                     if (yp < 0) yp = 0; else if (yp > LayoutRoot.Height) yp = (int)LayoutRoot.Height;
-
-                    var p1 = new Point(xpOld, ypOld);
-                    var p2 = new Point(xp, yp);
 
                     var line = new Line()
                     {
