@@ -6,9 +6,9 @@
 
 <div class="ft2-pattern-area ft2-panel">
 
-    <div class="ft2-chan-headers ft2-panel">
+    <div class="ft2-chan-headers ft2-panel" id="patternHeaders">
         <div class="ft2-chan-header-rownum"></div>
-        <div class="ft2-chan-headers-inner">
+        <div class="ft2-chan-headers-inner" id="patternHeadersInner">
             @for (int c = 0; c < channelCount; c++)
             {
                 <div class="ft2-chan-header">Ch @((c + 1).ToString("D2"))</div>
@@ -24,10 +24,9 @@
                     @for (int r = 0; r < rowCount; r++)
                     {
                         var row = r;
-                        var isActive = row == Player.PatternPosition;
-                        var isBar = row % 4 == 0 && !isActive;
+                        var isBar = row % 4 == 0;
 
-                        <div class="ft2-row @(isActive ? "active" : "") @(isBar ? "bar" : "")">
+                        <div class="ft2-row @(isBar ? "bar" : "")" id="prow_@row">
                             <span class="row-num">@row.ToString("X2")</span>
                             @for (int c = 0; c < channelCount; c++)
                             {
@@ -50,9 +49,7 @@
         }
         else
         {
-            <div class="ft2-dropzone">
-                Load a module to start ── .MOD .S3M .XM
-            </div>
+            <div class="ft2-dropzone">Load a module ── .MOD .S3M .XM</div>
         }
     </div>
 </div>
@@ -61,48 +58,54 @@
     private static readonly string[] NoteNames =
         { "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-" };
 
-    private Pattern? currentPattern;
+    private Pattern currentPattern;
     private int channelCount = 4;
     private int rowCount = 64;
     private int lastPatternNumber = -1;
+    private int lastModuleHash = 0;  // ← Détecter changement de module
 
     protected override void OnInitialized()
     {
-        Player.OnStateChanged += Refresh;
-        UpdatePattern();
+        Player.OnStateChanged += OnStateChanged;
     }
 
-    private void Refresh()
-    {
-        UpdatePattern();
-        InvokeAsync(async () =>
-        {
-            StateHasChanged();
-            if (Player.IsPlaying && currentPattern != null)
-            {
-                try
-                {
-                    await JS.InvokeVoidAsync("ft2ScrollToActiveRow",
-                        "patternGrid", Player.PatternPosition, 14, rowCount);
-                }
-                catch { }
-            }
-        });
-    }
-
-    private void UpdatePattern()
+    private void OnStateChanged()
     {
         var module = Player.CurrentModule;
         if (module == null) return;
-        channelCount = module.ChannelsCount;
-        if (Player.PatternNumber >= 0 && Player.PatternNumber < module.Patterns.Count)
+
+        // ══ Détecter changement de module (nouveau fichier chargé) ══
+        int moduleHash = module.GetHashCode();
+        if (moduleHash != lastModuleHash)
         {
-            if (Player.PatternNumber != lastPatternNumber)
+            lastModuleHash = moduleHash;
+            lastPatternNumber = -1;  // Force re-render
+            channelCount = module.ChannelsCount;
+        }
+
+        int patNum = Player.PatternNumber;
+
+        if (patNum >= 0 && patNum < module.Patterns.Count && patNum != lastPatternNumber)
+        {
+            currentPattern = module.Patterns[patNum];
+            rowCount = currentPattern.RowsCount;
+            channelCount = module.ChannelsCount;  // ← Toujours mettre à jour
+            lastPatternNumber = patNum;
+
+            InvokeAsync(async () =>
             {
-                currentPattern = module.Patterns[Player.PatternNumber];
-                rowCount = currentPattern.RowsCount;
-                lastPatternNumber = Player.PatternNumber;
-            }
+                StateHasChanged();
+                await Task.Yield();
+                try
+                {
+                    await JS.InvokeVoidAsync("ft2UpdatePatternGrid",
+                        "patternGrid", rowCount);
+                    // ══ Brancher le scroll sync après re-render ══
+                    await JS.InvokeVoidAsync("ft2SyncScrollInit",
+                        "patternGrid", "patternHeadersInner", "scopesCanvas");
+                }
+                catch { }
+            });
         }
     }
 
@@ -110,11 +113,9 @@
     {
         if (currentPattern == null || channel >= currentPattern.Tracks.Count)
             return ("···", "··", "··", "·", "··");
-
         var track = currentPattern.Tracks[channel];
         if (track?.Cells == null || row >= track.Cells.Count)
             return ("···", "··", "··", "·", "··");
-
         var pc = track.Cells[row];
         if (pc == null)
             return ("···", "··", "··", "·", "··");
@@ -122,14 +123,16 @@
         string note = (pc.Note.HasValue && pc.Note.Value >= 0 && pc.Note.Value < 12)
             ? $"{NoteNames[pc.Note.Value]}{(pc.Octave.HasValue ? (pc.Octave.Value + 1).ToString() : "-")}"
             : "···";
-
-        string inst = pc.Instrument != 0 ? pc.Instrument.ToString("D2") : "··";
+        string inst = pc.Instrument != 0 ? pc.Instrument.ToString("X2") : "··";
+        
         string vol = "··";
         string fx = (pc.Effect != 0 || pc.EffectData != 0) ? $"{pc.Effect:X1}" : "·";
         string fxd = (pc.Effect != 0 || pc.EffectData != 0) ? $"{pc.EffectData:X2}" : "··";
-
         return (note, inst, vol, fx, fxd);
     }
 
-    public void Dispose() => Player.OnStateChanged -= Refresh;
+    public void Dispose()
+    {
+        Player.OnStateChanged -= OnStateChanged;
+    }
 }

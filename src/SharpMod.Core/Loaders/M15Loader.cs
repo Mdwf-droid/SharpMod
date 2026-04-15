@@ -131,26 +131,30 @@ namespace SharpMod.Loaders
 
             for (int t = 0; t < patternsCount; t++)
             {
-                if (this.AllocPatterns != null && !AllocPatterns(_module, t, 64))
-                    return false;
-
-                if (this.AllocTracks != null && !AllocTracks(this._module.Patterns[t], _module.ChannelsCount))
-                    return false;
-               
-                // Load the pattern into the temp buffer and convert it
-                for (s = 0; s < (64 * this._module.ChannelsCount); s++)
+                try
                 {
-                    patbuf[s].a = Reader.ReadUByte();
-                    patbuf[s].b = Reader.ReadUByte();
-                    patbuf[s].c = Reader.ReadUByte();
-                    patbuf[s].d = Reader.ReadUByte();
-                }
-
-                for (s = 0; s < this._module.ChannelsCount; s++)
-                {                    
-                    if ((this._module.Patterns[t].Tracks[s].UniTrack = M15_ConvertTrack(patbuf, s)) == null)
+                    if (this.AllocPatterns != null && !AllocPatterns(_module, t, 64))
                         return false;
+
+                    if (this.AllocTracks != null && !AllocTracks(this._module.Patterns[t], _module.ChannelsCount))
+                        return false;
+
+                    // Load the pattern into the temp buffer and convert it
+                    for (s = 0; s < (64 * this._module.ChannelsCount); s++)
+                    {
+                        patbuf[s].a = Reader.ReadUByte();
+                        patbuf[s].b = Reader.ReadUByte();
+                        patbuf[s].c = Reader.ReadUByte();
+                        patbuf[s].d = Reader.ReadUByte();
+                    }
+
+                    for (s = 0; s < this._module.ChannelsCount; s++)
+                    {
+                        if ((this._module.Patterns[t].Tracks[s].UniTrack = M15_ConvertTrack(patbuf, s)) == null)
+                            return false;
+                    }
                 }
+                catch { /* Best Effort */}
             }
 
             return true;

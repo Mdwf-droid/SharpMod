@@ -88,6 +88,10 @@ namespace SharpMod
             }
         }
 
+        // Buffers pré-alloués pour éviter les allocations
+        private int[] _vuVolumes = new int[32];
+        private int[] _vuPeaks = new int[32];
+
         private readonly UniTrk _uniTrk;
         ///<summary>
         ///</summary>
@@ -116,6 +120,8 @@ namespace SharpMod
             ChannelsMixer.OnTickHandler += PlayerInstance.MP_HandleTick;
             ChannelsMixer.OnBPMRequest += delegate { return PlayerInstance.mp_bpm; };
             ChannelsMixer.WaveTable = WaveTableInstance;
+
+            ChannelsMixer.InitScopeBuffers();
 
             PlayerInstance.MP_Init(CurrentModule);
             PlayerInstance._mixer = ChannelsMixer;
@@ -208,6 +214,8 @@ namespace SharpMod
         ///<summary>
         ///</summary>
         public byte[] CurrentBytesWindow;
+
+        private sbyte[]? _sbyteBuffer;
         ///<summary>
         ///</summary>
         ///<param name="buffer"></param>
@@ -217,11 +225,47 @@ namespace SharpMod
         {
             if (IsPlaying)
             {
-                var c = ChannelsMixer.VC_WriteBytes((sbyte[])(Array)buffer, count);
+                // ══ OPTIM : Éviter le cast (sbyte[])(Array) ══
+                // Utiliser un buffer sbyte[] pré-alloué pour éviter l'allocation à chaque appel
+                if (_sbyteBuffer == null || _sbyteBuffer.Length < count)
+                    _sbyteBuffer = new sbyte[count];
+
+                var c = ChannelsMixer.VC_WriteBytes(_sbyteBuffer, count);
+
+                // Copie sbyte[] → byte[] sans allocation (même layout mémoire)
+                Buffer.BlockCopy(_sbyteBuffer, 0, buffer, 0, c);
+
                 CurrentBytesWindow = buffer;
                 return c;
             }
             return 0;
+        }
+
+        /// <summary>
+        /// Récupérer les niveaux VU de tous les canaux.
+        /// </summary>
+        public void GetChannelLevels(out int[] volumes, out int[] peaks, out int count)
+        {
+            if (ChannelsMixer != null)
+            {
+                ChannelsMixer.GetAllChannelLevels(_vuVolumes, _vuPeaks, out count);
+                volumes = _vuVolumes;
+                peaks = _vuPeaks;
+            }
+            else
+            {
+                volumes = _vuVolumes;
+                peaks = _vuPeaks;
+                count = 0;
+            }
+        }
+
+        /// <summary>
+        /// Récupérer les données d'oscilloscope pour un canal.
+        /// </summary>
+        public sbyte[] GetScopeData(int channel)
+        {
+            return ChannelsMixer?.GetScopeData(channel) ?? Array.Empty<sbyte>();
         }
 
         ///<summary>

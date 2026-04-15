@@ -7,7 +7,6 @@
 
 <div class="ft2-screen">
 
-    @* ── Title Bar ── *@
     <div class="ft2-titlebar ft2-panel">
         <span class="logo">SharpMod</span>
         <span class="subtitle">── FastTracker II Style ──</span>
@@ -15,10 +14,7 @@
         <button class="ft2-btn" @onclick="TriggerFileInput">📂 Load</button>
     </div>
 
-    @* ── Top: Info + FFT + Instruments ── *@
     <div class="ft2-top">
-
-        @* Left: Song Info + Transport *@
         <div class="ft2-song-info">
             <div class="ft2-panel" style="flex:1;">
                 <div class="ft2-info-grid">
@@ -32,18 +28,18 @@
                     <span class="value">@Player.BPM</span>
                     <span class="label">Speed:</span>
                     <span class="value">@Player.Speed</span>
-                    <span class="label">Position:</span>
-                    <span class="value">@Player.SongPosition.ToString("D3") / @Player.PatternNumber.ToString("D3") / @Player.PatternPosition.ToString("D2")</span>
                 </div>
             </div>
             <div class="ft2-transport ft2-panel">
-                <button class="ft2-btn ft2-btn-play @(Player.IsPlaying ? "active" : "")" @onclick="OnPlay">▶ Play</button>
+                <button class="ft2-btn ft2-btn-play @(Player.IsPlaying ? "active" : "")"
+                        @onclick="OnPlay">
+                    ▶ Play
+                </button>
                 <button class="ft2-btn ft2-btn-stop" @onclick="OnStop">■ Stop</button>
                 <button class="ft2-btn ft2-btn-pause" @onclick="OnPause">❚❚ Pause</button>
             </div>
         </div>
 
-        @* Center: FFT Spectrum Analyzer *@
         <div class="ft2-fft-panel ft2-panel">
             <div class="panel-title">Spectrum</div>
             <div class="ft2-fft-canvas-wrap ft2-panel-inset">
@@ -51,7 +47,6 @@
             </div>
         </div>
 
-        @* Right: Instrument List *@
         <div class="ft2-instrument-panel ft2-panel">
             <div class="panel-title">Instruments</div>
             <div class="ft2-inst-list ft2-panel-inset">
@@ -71,16 +66,11 @@
         </div>
     </div>
 
-    @* ── Scopes + VU Meters (1 per channel) ── *@
     <ScopeVuView />
-
-    @* ── Pattern Editor ── *@
     <PatternEditorView />
 
-    @* ── Status Bar ── *@
     <div class="ft2-statusbar ft2-panel">
         <span>@Player.StatusMessage</span>
-        <span>SharpMod ── github.com/Mdwf-droid/SharpMod</span>
     </div>
 </div>
 
@@ -94,14 +84,28 @@
     private async Task OnPlay()
     {
         await Player.PlayAsync();
-        // Démarrer la FFT animation
-        try { await JS.InvokeVoidAsync("ft2StartFFT", "fftCanvas"); } catch { }
+
+        // Init scopes si pas encore fait
+        try
+        {
+            await JS.InvokeVoidAsync("ft2InitScopes", Player.ChannelCount);
+        }
+        catch { }
+
+        // Lancer LA boucle unique — FFT + Scopes + Pattern
+        try
+        {
+            await JS.InvokeVoidAsync("ft2StartAll",
+                "fftCanvas", "scopesCanvas", "patternGrid", 14, 64);
+        }
+        catch { }
     }
 
     private async Task OnStop()
     {
         await Player.StopAsync();
-        try { await JS.InvokeVoidAsync("ft2StopFFT"); } catch { }
+        try { await JS.InvokeVoidAsync("ft2StopAll"); }
+        catch { }
     }
 
     private async Task OnPause() => await Player.PauseAsync();

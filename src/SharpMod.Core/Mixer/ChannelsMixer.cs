@@ -1,12 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using SharpMod.Exceptions;
+﻿using SharpMod.DSP;
 using SharpMod.Player;
-using SharpMod.IO;
-using SharpMod.Song;
-using SharpMod.UniTracker;
-using SharpMod.DSP;
+using System;
 
 namespace SharpMod.Mixer
 {
@@ -19,7 +13,7 @@ namespace SharpMod.Mixer
     public class ChannelsMixer
     {
         private delegate void MixingFunctionHandler(byte[] srce, int[] dest, int dest_offset, int index, int increment, short todo);
-        private event MixingFunctionHandler OnMixingFunction;
+        // private event MixingFunctionHandler OnMixingFunction;
 
         public event TickHandler OnTickHandler;
         public event BPMRequestHandler OnBPMRequest;
@@ -49,6 +43,29 @@ namespace SharpMod.Mixer
         private readonly int CLICK_BUFFER = (1 << CLICK_SHIFT);
 
         internal AudioProcessor _audioProcessor;
+
+        /// <summary>
+        /// Nombre de samples à capturer par canal pour l'oscilloscope.
+        /// 128 samples = ~3ms à 44100 Hz, suffisant pour un affichage fluide.
+        /// </summary>
+        private const int SCOPE_BUFFER_SIZE = 128;
+
+        /// <summary>
+        /// Ring buffers pour les oscilloscopes : un par canal (max 32).
+        /// Chaque buffer contient les derniers SCOPE_BUFFER_SIZE samples mixés.
+        /// </summary>
+        private readonly sbyte[][] _scopeBuffers = new sbyte[32][];
+        private readonly int[] _scopeWritePos = new int[32];
+
+        /// <summary>
+        /// Niveaux de crête (peak) par canal, décroissance automatique.
+        /// Mis à jour dans VC_WriteSamples à chaque tick.
+        /// Valeur 0-128.
+        /// </summary>
+        private readonly int[] _peakLevels = new int[32];
+
+        // ══ v7.1 : Buffer DSP pré-alloué (évite new int[] à chaque tick) ══
+        private int[] _dspOutputBuffer;
 
         //internal DMode _dMode;
         private MixConfig _mixCfg;
@@ -132,7 +149,7 @@ namespace SharpMod.Mixer
 
         public ChannelsMixer(MixConfig mixCfg/* DMode dMode*/)
         {
-           
+
             //this._dMode = dMode;
             this.MixCfg = mixCfg;
 
@@ -187,6 +204,89 @@ namespace SharpMod.Mixer
         }
 
 
+        /// <summary>
+        /// Initialiser les buffers d'oscilloscope. Appeler une fois au setup.
+        /// </summary>
+        public void InitScopeBuffers()
+        {
+            for (int i = 0; i < 32; i++)
+            {
+                _scopeBuffers[i] = new sbyte[SCOPE_BUFFER_SIZE];
+                _scopeWritePos[i] = 0;
+                _peakLevels[i] = 0;
+            }
+            // Pré-allouer le buffer DSP (taille max = TICKLSIZE * 2)
+            _dspOutputBuffer = new int[TICKLSIZE * 2];
+        }
+
+        /// <summary>
+        /// Récupérer les infos de niveau pour un canal (pour les VU-meters).
+        /// Retourne (volume 0-128, pan 0-255, active, leftVolMul, rightVolMul, peakLevel).
+        /// </summary>
+        public (int Vol, int Pan, bool Active, int LeftVol, int RightVol, int Peak) GetChannelLevel(int channel)
+        {
+            if (channel < 0 || channel >= ChannelsCount || channel >= 32)
+                return (0, 128, false, 0, 0, 0);
+
+            var ci = vinf[channel];
+            return (ci.Vol, ci.Pan, ci.Active, ci.LeftVolMul, ci.RightVolMul, _peakLevels[channel]);
+        }
+
+        /// <summary>
+        /// Récupérer les niveaux de tous les canaux d'un coup (évite N appels).
+        /// Retourne un tableau de (vol, peak) pour chaque canal actif.
+        /// </summary>
+        public void GetAllChannelLevels(int[] volumes, int[] peaks, out int count)
+        {
+            count = Math.Min(ChannelsCount, 32);
+            for (int i = 0; i < count; i++)
+            {
+                volumes[i] = vinf[i].Active ? vinf[i].Vol : 0;
+                peaks[i] = _peakLevels[i];
+            }
+        }
+
+        /// <summary>
+        /// Récupérer le buffer d'oscilloscope pour un canal.
+        /// Retourne une copie pour éviter les problèmes de concurrence.
+        /// </summary>
+        public sbyte[] GetScopeData(int channel)
+        {
+            if (channel < 0 || channel >= 32 || _scopeBuffers[channel] == null)
+                return Array.Empty<sbyte>();
+
+            // Copie ordonnée : du plus ancien au plus récent
+            var result = new sbyte[SCOPE_BUFFER_SIZE];
+            var wp = _scopeWritePos[channel];
+            Array.Copy(_scopeBuffers[channel], wp, result, 0, SCOPE_BUFFER_SIZE - wp);
+            Array.Copy(_scopeBuffers[channel], 0, result, SCOPE_BUFFER_SIZE - wp, wp);
+            return result;
+        }
+
+        /// <summary>
+        /// Mettre à jour les niveaux de crête. Appeler à chaque tick dans VC_WriteSamples.
+        /// Decay progressif pour un effet VU-meter réaliste.
+        /// </summary>
+        private void UpdatePeakLevels()
+        {
+            for (int t = 0; t < ChannelsCount && t < 32; t++)
+            {
+                if (vinf[t].Active)
+                {
+                    int currentLevel = vinf[t].Vol;
+                    if (currentLevel > _peakLevels[t])
+                        _peakLevels[t] = currentLevel;
+                    else
+                        _peakLevels[t] = Math.Max(0, _peakLevels[t] - 3); // Decay
+                }
+                else
+                {
+                    _peakLevels[t] = Math.Max(0, _peakLevels[t] - 3);
+                }
+            }
+        }
+
+
         protected internal virtual void VC_Sample32To8Copy(int[] srce, sbyte[] dest, int dest_offset, int count, short shift)
         {
             int c;
@@ -232,7 +332,7 @@ namespace SharpMod.Mixer
                 {
                     dest[dest_idx++] = (sbyte)((c >> 8) & 0xFF);
                     dest[dest_idx++] = (sbyte)(c & 0xFF);
-                }  
+                }
 
                 //#endif
                 src_idx++;
@@ -277,152 +377,104 @@ namespace SharpMod.Mixer
         }
 
 
-        /* public virtual int LargeRead(byte[] buffer, int size)
-         {
-             int t;
-             int todo;
-             int buf_offset = 0;
+        // <summary>
+        /// Capture les derniers samples mixés pour l'oscilloscope du canal courant.
+        /// Appelé APRÈS la boucle de mix, donc zéro overhead dans la boucle chaude.
+        /// On ne capture que les derniers SCOPE_BUFFER_SIZE samples max.
+        /// </summary>
+        private void CaptureScope(byte[] srce, int startIndex, int increment, int sampleCount)
+        {
+            if (_currentMixChannel < 0 || _currentMixChannel >= 32) return;
+            var buf = _scopeBuffers[_currentMixChannel];
+            if (buf == null) return;
 
-             while (size != 0)
-             {
-                 // how many bytes to load (in chunks of 8000) ? 
-                 todo = (size > 8000) ? 8000 : size;
+            // Capturer les N derniers samples (on n'a pas besoin de tout)
+            int toCapture = Math.Min(sampleCount, SCOPE_BUFFER_SIZE);
+            // Avancer jusqu'aux derniers 'toCapture' samples
+            int idx = startIndex + (sampleCount - toCapture) * increment;
+            int wp = _scopeWritePos[_currentMixChannel];
 
-                 // read data 
-                 _driver.SL_Load(buffer, buf_offset, todo);
+            for (int i = 0; i < toCapture; i++)
+            {
+                int sampleIdx = idx >> FRACBITS;
+                if (sampleIdx >= 0 && sampleIdx < srce.Length)
+                    buf[wp] = (sbyte)srce[sampleIdx];
+                else
+                    buf[wp] = 0;
 
-                 // and update pointers.. 
-                 size -= todo;
-                 buf_offset += todo;
-             }
-             return 1;
-         }
+                wp = (wp + 1) % SCOPE_BUFFER_SIZE;
+                idx += increment;
+            }
 
-         public virtual short VC_SampleLoad(ModBinaryReader fp, int length, int reppos, int repend, SampleFormatFlags flags)
-         {
-             int handle;
-             int t;
-
-             _driver.SL_Init(fp, flags, ((flags | (SampleFormatFlags.SF_SIGNED)) & ~(SampleFormatFlags.SF_16BITS)));
-
-             // Find empty slot to put sample address in 
-             for (handle = 0; handle < MAXSAMPLEHANDLES; handle++)
-             {
-                 if (Samples[handle] == null)
-                     break;
-             }
-
-             if (handle == MAXSAMPLEHANDLES)
-             {
-                 throw new MikModException(SharpModExceptionResources.ERROR_OUT_OF_HANDLES);
-             }
-
-
-             Samples[handle] = new byte[length + 17];
-            
-             // read sample into buffer. 
-             LargeRead(Samples[handle], length);
-            
-             // Unclick samples: 
-             if ((flags & (SampleFormatFlags.SF_LOOP)) != 0)
-             {
-                 if ((flags & (SampleFormatFlags.SF_BIDI)) != 0)
-                     for (t = 0; t < 16; t++)
-                         Samples[handle][repend + t] = Samples[handle][(repend - t) - 1];                        
-                 else
-                     for (t = 0; t < 16; t++)
-                         Samples[handle][repend + t] = Samples[handle][t + reppos];                        
-             }
-             else
-             {
-                 for (t = 0; t < 16; t++)
-                     Samples[handle][t + length] = 0;                    
-             }
-
-             return (short)handle;
-         }
-
-         public byte[] GetSampleStream(short handle)
-         {
-             byte[] toReturn = null;
-             if (handle != -1)
-             {
-                 toReturn = new byte[Samples[handle].Length];
-                 Buffer.BlockCopy(Samples[handle], 0, toReturn, 0, Samples[handle].Length);
-             }
-
-             return toReturn;
-         }
-
-         public virtual void VC_SampleUnload(int handle)
-         {
-             Samples[handle] = null;            
-         }
-
- */
+            _scopeWritePos[_currentMixChannel] = wp;
+        }
 
         protected internal virtual void MixStereoNormal(byte[] srce, int[] dest, int dest_offset, int index, int increment, short todo)
         {
-            /*sbyte sample;
+            int sample = 0;
             int dest_idx = dest_offset;
+            int startIndex = index; // ══ v7.1 : sauver l'index de départ pour scope ══
+
+            // ══ Phase 1 — Ramp volume ══
+            while (todo > 0 && vnf.RampVol > 0)
+            {
+                sample = (sbyte)srce[index >> FRACBITS];
+                index += increment;
+
+                dest[dest_idx++] += (
+                    (((vnf.OldLeftVol * vnf.RampVol) +
+                        (vnf.LeftVolMul * (CLICK_BUFFER - vnf.RampVol))
+                    ) * sample) >> CLICK_SHIFT);
+                dest[dest_idx++] += (
+                    (((vnf.OldRightVol * vnf.RampVol) +
+                        (vnf.RightVolMul * (CLICK_BUFFER - vnf.RampVol))
+                    ) * sample) >> CLICK_SHIFT);
+
+                vnf.RampVol--;
+                todo--;
+            }
+
+            // ══ Phase 2 — Click removal ══
+            while (todo > 0 && vnf.Click > 0)
+            {
+                sample = (sbyte)srce[index >> FRACBITS];
+                index += increment;
+
+                dest[dest_idx++] += (
+                    (((vnf.LeftVolMul * (CLICK_BUFFER - vnf.Click)) *
+                        sample) + (vnf.LastValLeft * vnf.Click))
+                    >> CLICK_SHIFT);
+                dest[dest_idx++] += (
+                    (((vnf.RightVolMul * (CLICK_BUFFER - vnf.Click)) *
+                        sample) + (vnf.LastValRight * vnf.Click))
+                    >> CLICK_SHIFT);
+
+                vnf.Click--;
+                todo--;
+            }
+
+            // ══ Phase 3 — Boucle principale SANS BRANCHES ══
+            int lv = vnf.LeftVolMul;
+            int rv = vnf.RightVolMul;
+            int phase3Start = index; // ══ v7.1 : pour scope capture ══
+            int phase3Count = todo;
 
             while (todo > 0)
             {
                 sample = (sbyte)srce[index >> FRACBITS];
-                dest[dest_idx++] += lvolmul * sample;
-                dest[dest_idx++] += rvolmul * sample;
                 index += increment;
+
+                dest[dest_idx++] += lv * sample;
+                dest[dest_idx++] += rv * sample;
+
                 todo--;
-            }*/
-
-            int sample = 0;
-            int i, f;
-            int dest_idx = dest_offset;
-
-            while ((todo--) > 0)
-            {
-                i = index >> FRACBITS;
-                f = index & FRACMASK;
-
-                sample = (sbyte)srce[index >> FRACBITS]; /*(int)((((sbyte)srce[i] * (FRACMASK + 1L - f)) +
-                        ((sbyte)srce[i + 1] * f)) >> FRACBITS);*/
-                index += increment;
-
-                if (vnf.RampVol > 0)
-                {
-                    dest[dest_idx++] += (
-                      (((vnf.OldLeftVol * vnf.RampVol) +
-                          (vnf.LeftVolMul * (CLICK_BUFFER - vnf.RampVol))
-                        ) * sample) >> CLICK_SHIFT);
-                    dest[dest_idx++] += (
-                      (((vnf.OldRightVol * vnf.RampVol) +
-                          (vnf.RightVolMul * (CLICK_BUFFER - vnf.RampVol))
-                        ) * sample) >> CLICK_SHIFT);
-                    vnf.RampVol--;
-                }
-                else
-                    if (vnf.Click > 0)
-                    {
-                        dest[dest_idx++] += (
-                        (((vnf.LeftVolMul * (CLICK_BUFFER - vnf.Click)) *
-                            sample) + (vnf.LastValLeft * vnf.Click))
-                          >> CLICK_SHIFT);
-                        dest[dest_idx++] += (
-                        (((vnf.RightVolMul * (CLICK_BUFFER - vnf.Click)) *
-                            sample) + (vnf.LastValRight * vnf.Click))
-                          >> CLICK_SHIFT);
-                        vnf.Click--;
-                    }
-                    else
-                    {
-                        dest[dest_idx++] += vnf.LeftVolMul * sample;
-                        dest[dest_idx++] += vnf.RightVolMul * sample;
-                    }
             }
-            vnf.LastValLeft = vnf.LeftVolMul * sample;
-            vnf.LastValRight = vnf.RightVolMul * sample;
 
+            vnf.LastValLeft = lv * sample;
+            vnf.LastValRight = rv * sample;
 
+            // ══ v7.1 : Capture scope APRÈS la boucle (pas de coût dans la boucle chaude) ══
+            CaptureScope(srce, phase3Start, increment, phase3Count);
         }
 
 
@@ -440,163 +492,126 @@ namespace SharpMod.Mixer
             }
         }
 
-        protected internal virtual void MixSurroundNormal(byte[] srce, int[] dest, int dest_offset, int index, int increment, short todo)
+        protected internal virtual void MixSurroundNormal(byte[] srce, int[] dest,
+    int dest_offset, int index, int increment, short todo)
         {
             int sample = 0;
             int whoop;
-            int i, f;
             int dest_idx = dest_offset;
 
-            while ((todo--) > 0)
+            // ══ Phase 1 — Ramp ══
+            while (todo > 0 && vnf.RampVol > 0)
             {
-                i = index >> FRACBITS;
-                f = index & FRACMASK;
                 sample = (sbyte)srce[index >> FRACBITS];
-
                 index += increment;
 
-                if (vnf.RampVol > 0)
-                {
-                    whoop = (
-                      (((vnf.OldLeftVol * vnf.RampVol) +
-                          (vnf.LeftVolMul * (CLICK_BUFFER - vnf.RampVol))) *
-                        sample) >> CLICK_SHIFT);
-                    dest[dest_idx++] += whoop;
-                    dest[dest_idx++] -= whoop;
-                    vnf.RampVol--;
-                }
-                else
-                    if (vnf.Click > 0)
-                    {
-                        whoop = (
-                          (((vnf.LeftVolMul * (CLICK_BUFFER - vnf.Click)) *
-                              sample) +
-                            (vnf.LastValLeft * vnf.Click)) >> CLICK_SHIFT);
-                        dest[dest_idx++] += whoop;
-                        dest[dest_idx++] -= whoop;
-                        vnf.Click--;
-                    }
-                    else
-                    {
-                        dest[dest_idx++] += vnf.LeftVolMul * sample;
-                        dest[dest_idx++] -= vnf.LeftVolMul * sample;
-                    }
+                whoop = (
+                    (((vnf.OldLeftVol * vnf.RampVol) +
+                        (vnf.LeftVolMul * (CLICK_BUFFER - vnf.RampVol))) *
+                    sample) >> CLICK_SHIFT);
+                dest[dest_idx++] += whoop;
+                dest[dest_idx++] -= whoop;
+
+                vnf.RampVol--;
+                todo--;
             }
-            vnf.LastValLeft = vnf.LeftVolMul * sample;
-            vnf.LastValRight = vnf.LeftVolMul * sample;
-            /*sbyte sample;
-            int dest_idx = dest_offset;
 
-            if (lvolmul >= rvolmul)
+            // ══ Phase 2 — Click ══
+            while (todo > 0 && vnf.Click > 0)
             {
-                while (todo-- > 0)
-                {
-                    sample = (sbyte)srce[index >> FRACBITS];
-                    index += increment;
-                    dest[dest_idx++] += lvolmul * sample;
-                    dest[dest_idx++] -= lvolmul * sample;
-                }
+                sample = (sbyte)srce[index >> FRACBITS];
+                index += increment;
+
+                whoop = (
+                    (((vnf.LeftVolMul * (CLICK_BUFFER - vnf.Click)) *
+                        sample) +
+                    (vnf.LastValLeft * vnf.Click)) >> CLICK_SHIFT);
+                dest[dest_idx++] += whoop;
+                dest[dest_idx++] -= whoop;
+
+                vnf.Click--;
+                todo--;
             }
-            else
+
+            // ══ Phase 3 — Boucle principale ══
+            int lv = vnf.LeftVolMul;
+            int phase3Start = index;
+            int phase3Count = todo;
+
+            while (todo > 0)
             {
-                while (todo-- > 0)
-                {
-                    sample = (sbyte)srce[index >> FRACBITS];
-                    index += increment;
-                    dest[dest_idx++] -= rvolmul * sample;
-                    dest[dest_idx++] += rvolmul * sample;
-                }
+                sample = (sbyte)srce[index >> FRACBITS];
+                index += increment;
 
-            }*/
+                dest[dest_idx++] += lv * sample;
+                dest[dest_idx++] -= lv * sample;
 
+                todo--;
+            }
+
+            vnf.LastValLeft = lv * sample;
+            vnf.LastValRight = lv * sample;
+
+            // ══ v7.1 : Capture scope APRÈS la boucle ══
+            CaptureScope(srce, phase3Start, increment, phase3Count);
         }
 
-        protected internal virtual void MixStereoInterp(byte[] srce, int[] dest, int dest_offset, int index, int increment, short todo)
+
+        protected internal virtual void MixStereoInterp(byte[] srce, int[] dest,
+     int dest_offset, int index, int increment, short todo)
         {
-            int sample;
+            int sample = 0;
             int lvolsel = vnf.LeftVolMul;
             int rvolsel = vnf.RightVolMul;
             int rampvol = vnf.RampVol;
-            int a;
-            int b;
+            int a, b;
             int dest_idx = dest_offset;
 
-            if (rampvol >0)
+            // ══ Phase 1 : Ramp volume ══
+            if (rampvol > 0)
             {
-                int oldlvol = vnf.OldLeftVol- lvolsel;
+                int oldlvol = vnf.OldLeftVol - lvolsel;
                 int oldrvol = vnf.OldRightVol - rvolsel;
-                while ((todo--)>0)
+
+                while (todo > 0 && rampvol > 0)
                 {
                     a = (sbyte)srce[index >> FRACBITS];
                     b = (sbyte)srce[1 + (index >> FRACBITS)];
                     sample = (short)(a + (((int)(b - a) * (index & FRACMASK)) >> FRACBITS));
-
                     index += increment;
 
                     dest[dest_idx++] += ((lvolsel << CLICK_SHIFT) + oldlvol * rampvol)
-                               * sample >> CLICK_SHIFT;
+                        * sample >> CLICK_SHIFT;
                     dest[dest_idx++] += ((rvolsel << CLICK_SHIFT) + oldrvol * rampvol)
-                               * sample >> CLICK_SHIFT;
-                    if (!(--rampvol>0))
-                        break;
+                        * sample >> CLICK_SHIFT;
+
+                    rampvol--;
+                    todo--;
                 }
                 vnf.RampVol = rampvol;
-                if (todo < 0)
-                    return;
             }
 
-            while ((todo--)>0)
-            {
-                a = (sbyte)srce[index >> FRACBITS];
-                b = (sbyte)srce[1 + (index >> FRACBITS)];
-                sample = (short)(a + (((int)(b - a) * (index & FRACMASK)) >> FRACBITS));
-
-                index += increment;
-
-                dest[dest_idx++] += lvolsel * sample;
-                dest[dest_idx++] += rvolsel * sample;
-            }
-           
-           /* short sample, a, b;
-            int dest_idx = dest_offset;
-            int rampvol = vnf.RampVol;
-
-            if (rampvol > 0)
-            {
-                int oldlvol = vnf.OldLeftVol - vnf.LeftVolMul;
-                int oldrvol = vnf.OldRightVol - vnf.RightVolMul;
-                while ((todo--) > 0)
-                {
-                    a = (sbyte)srce[index >> FRACBITS];
-                    b = (sbyte)srce[1 + (index >> FRACBITS)];
-                    sample = (short)(a + (((int)(b - a) * (index & FRACMASK)) >> FRACBITS));
-
-                    index += increment;
-
-                    dest[dest_idx++] += ((vnf.LeftVolMul << CLICK_SHIFT) + oldlvol * rampvol)
-                               * sample >> CLICK_SHIFT;
-                    dest[dest_idx++] += ((vnf.RightVolMul << CLICK_SHIFT) + oldrvol * rampvol)
-                               * sample >> CLICK_SHIFT;
-                    if (!(--rampvol > 0))
-                        break;
-                }
-                vnf.RampVol = rampvol;
-                if (todo < 0)
-                    return; //index;
-            }
+            // ══ Phase 2 : Boucle principale SANS BRANCHES ══
+            int phase2Start = index;
+            int phase2Count = todo;
 
             while (todo > 0)
             {
                 a = (sbyte)srce[index >> FRACBITS];
                 b = (sbyte)srce[1 + (index >> FRACBITS)];
                 sample = (short)(a + (((int)(b - a) * (index & FRACMASK)) >> FRACBITS));
-
-                dest[dest_idx++] += lvolmul * sample;
-                dest[dest_idx++] += rvolmul * sample;
                 index += increment;
+
+                dest[dest_idx++] += lvolsel * sample;
+                dest[dest_idx++] += rvolsel * sample;
+
                 todo--;
-            }*/
+            }
+
+            // ══ v7.1 : Capture scope APRÈS la boucle ══
+            CaptureScope(srce, phase2Start, increment, phase2Count);
         }
+
 
 
         protected internal virtual void MixMonoInterp(byte[] srce, int[] dest, int dest_offset, int index, int increment, short todo)
@@ -743,43 +758,40 @@ namespace SharpMod.Mixer
         protected internal virtual void VC_AddChannel(int[] ptr, int todo)
         {
             int end;
-            int done;            
-            
+            int done;
             int ptr_idx = 0;
+
+            // ══ OPTIM v6 : Hoister le sample lookup AVANT la boucle ══
+            byte[] sample = this.WaveTable.Samples[vnf.Handle];
+            if (sample == null)
+            {
+                vnf.Current = 0;
+                vnf.Active = false;
+                return;
+            }
 
             while (todo > 0)
             {
-
-                // update the 'current' index so the sample loops, or
-                // stops playing if it reached the end of the sample
                 if ((vnf.Flags & (SampleFormatFlags.SF_REVERSE)) != 0)
                 {
-                    // The sample is playing in reverse
                     if ((vnf.Flags & (SampleFormatFlags.SF_LOOP)) != 0)
                     {
-                        // the sample is looping, so check if it reached the loopstart index
                         if (vnf.Current < idxlpos)
                         {
                             if ((vnf.Flags & (SampleFormatFlags.SF_BIDI)) != 0)
                             {
-                                // sample is doing bidirectional loops, so 'bounce'
-                                // the current index against the idxlpos
                                 vnf.Current = idxlpos + (idxlpos - vnf.Current);
                                 vnf.Flags &= ~(SampleFormatFlags.SF_REVERSE);
                                 vnf.Increment = -vnf.Increment;
                             }
-                            // normal backwards looping, so set the current position to loopend index
                             else
                                 vnf.Current = idxlend - (idxlpos - vnf.Current);
                         }
                     }
                     else
                     {
-                        // the sample is not looping, so check if it reached index 0
                         if (vnf.Current < 0)
                         {
-
-                            // playing index reached 0, so stop playing this sample
                             vnf.Current = 0;
                             vnf.Active = false;
                             break;
@@ -788,46 +800,29 @@ namespace SharpMod.Mixer
                 }
                 else
                 {
-                    // The sample is playing forward
                     if ((vnf.Flags & (SampleFormatFlags.SF_LOOP)) != 0)
                     {
-                        // the sample is looping, so check if it reached the loopend index
                         if (vnf.Current > idxlend)
                         {
                             if ((vnf.Flags & (SampleFormatFlags.SF_BIDI)) != 0)
                             {
-                                // sample is doing bidirectional loops, so 'bounce' the current index against the idxlend
                                 vnf.Flags |= (SampleFormatFlags.SF_REVERSE);
                                 vnf.Increment = -vnf.Increment;
-                                vnf.Current = idxlend - (vnf.Current - idxlend); /* ?? */
+                                vnf.Current = idxlend - (vnf.Current - idxlend);
                             }
-                            // normal backwards looping, so set the current position to loopend index 
                             else
                                 vnf.Current = idxlpos + (vnf.Current - idxlend);
                         }
                     }
                     else
                     {
-                        // sample is not looping, so check if it reached the last position
                         if (vnf.Current > idxsize)
                         {
-
-                            // yes, so stop playing this sample
                             vnf.Current = 0;
                             vnf.Active = false;
                             break;
                         }
                     }
-                }
-
-                // Ask a far ptr at the sample address vnf.current at byte offset, and
-                // number of samples shall be valid (BEFORE segment crossing occurs)
-                byte[] sample = this.WaveTable.Samples[vnf.Handle];
-                if (sample == null) // Samples[vnf.Handle] == null)                
-                {
-                    vnf.Current = 0;
-                    vnf.Active = false;
-                    break;
                 }
 
                 if ((vnf.Flags & (SampleFormatFlags.SF_REVERSE)) != 0)
@@ -835,18 +830,14 @@ namespace SharpMod.Mixer
                 else
                     end = ((vnf.Flags & (SampleFormatFlags.SF_LOOP)) != 0) ? idxlend : idxsize;
 
-                // If the sample is simply not available, or if sample has to be stopped sample stop and stop
-                // mix 'em: 
                 done = NewPredict(vnf.Current, end, vnf.Increment, todo);
 
                 if (done == 0)
                 {
-                    /*printf("predict stopped it. current %ld, end %ld\n",vnf.current,end);*/
                     vnf.Active = false;
                     break;
                 }
 
-                // optimisation: don't mix anything if volume is zero
                 if (vnf.Vol != 0 || vnf.RampVol != 0)
                 {
                     SampleMix(sample, ptr, ptr_idx, vnf.Current, vnf.Increment, (short)done);
@@ -859,11 +850,11 @@ namespace SharpMod.Mixer
 
                 vnf.Current += (vnf.Increment * done);
                 todo -= done;
-                ptr_idx += (this.MixCfg.Style != RenderingStyle.Mono /*(this._dMode & DMode.DMODE_STEREO) != 0*/) ? (done << 1) : done;
+                ptr_idx += (this.MixCfg.Style != RenderingStyle.Mono) ? (done << 1) : done;
             }
-
-
         }
+
+        private int _currentMixChannel;
 
         /// <summary>
         /// Mixes 'todo' samples to 'buf'.. The number of samples has
@@ -876,11 +867,14 @@ namespace SharpMod.Mixer
         {
             int t;
 
-            //clear the mixing buffer:
-            Array.Clear(VC_TICKBUF, 0, ((this.MixCfg.Style != RenderingStyle.Mono /*(this._dMode & DMode.DMODE_STEREO) != 0*/) ? (todo << 1) : (todo)));
+            // Clear the mixing buffer
+            Array.Clear(VC_TICKBUF, 0,
+                (this.MixCfg.Style != RenderingStyle.Mono) ? (todo << 1) : todo);
 
             for (t = 0; t < this.ChannelsCount; t++)
             {
+                _currentMixChannel = t;  // ══ v7 : tracker le canal pour l'oscillo ══
+
                 vnf = vinf[t];
 
                 if (vnf.Active)
@@ -900,25 +894,30 @@ namespace SharpMod.Mixer
             if (this.MixCfg.Reverb > 0)
                 MixReverb_Stereo(VC_TICKBUF, todo);
 
+            // ══ v7.1 OPTIM : Réutiliser le buffer DSP pré-alloué ══
             if (_audioProcessor != null)
             {
-                int[] DspOutput = new int[todo << 1];
-                for (int i = 0; i < todo << 1; i++)
-                    DspOutput[i] = VC_TICKBUF[i] >> (16-ampshift);
-                _audioProcessor.writeSampleData(DspOutput, 0, todo << 1);
+                int dspLen = todo << 1;
+                // S'assurer que le buffer est assez grand
+                if (_dspOutputBuffer == null || _dspOutputBuffer.Length < dspLen)
+                    _dspOutputBuffer = new int[dspLen];
+
+                int shift = 16 - ampshift;
+                for (int i = 0; i < dspLen; i++)
+                    _dspOutputBuffer[i] = VC_TICKBUF[i] >> shift;
+
+                _audioProcessor.writeSampleData(_dspOutputBuffer, 0, dspLen);
                 _audioProcessor.Run();
             }
 
-            //PostFilters.Instance.DoMegaBass(VC_TICKBUF, todo, 16-ampshift);
-
-            if (this.MixCfg.Is16Bits) /*(this._dMode & DMode.DMODE_16BITS) != 0)*/
-                //VC_Sample32To16Copy(VC_TICKBUF,(short *)buf,(buf_offset>>1),(_config.DMode & m_.DMODE_STEREO) ? todo<<1 : todo,16-ampshift);
-                VC_Sample32To16Copy(VC_TICKBUF, buf, buf_offset, /*((this._dMode & DMode.DMODE_STEREO) != 0)*/ this.MixCfg.Style != RenderingStyle.Mono ? todo << 1 : todo, (short)(16 - ampshift));
+            if (this.MixCfg.Is16Bits)
+                VC_Sample32To16Copy(VC_TICKBUF, buf, buf_offset,
+                    this.MixCfg.Style != RenderingStyle.Mono ? todo << 1 : todo,
+                    (short)(16 - ampshift));
             else
-                VC_Sample32To8Copy(VC_TICKBUF, buf, buf_offset, /*((this._dMode & DMode.DMODE_STEREO) != 0)*/  this.MixCfg.Style != RenderingStyle.Mono ? todo << 1 : todo, (short)(24 - ampshift));
-
-            //PostFilters.Instance.DSPInit(buf);
-            
+                VC_Sample32To8Copy(VC_TICKBUF, buf, buf_offset,
+                    this.MixCfg.Style != RenderingStyle.Mono ? todo << 1 : todo,
+                    (short)(24 - ampshift));
         }
 
 
@@ -958,9 +957,11 @@ namespace SharpMod.Mixer
                 {
                     this.TickHandler();
 
+                    // ══ v7 : Mettre à jour les peaks à chaque tick ══
+                    UpdatePeakLevels();
+
                     TICKLEFT = (125 * this.MixCfg.Rate) / (50 * this.BPM);
 
-                    // compute volume, frequency counter & panning parameters for each channel.
                     for (t = 0; t < this.ChannelsCount; t++)
                     {
                         int pan, vol, lvol, rvol;
@@ -990,10 +991,8 @@ namespace SharpMod.Mixer
                             vinf[t].OldLeftVol = vinf[t].LeftVolMul;
                             vinf[t].OldRightVol = vinf[t].RightVolMul;
 
-
-                            //if ((this._dMode & DMode.DMODE_STEREO) != 0)
                             if (this.MixCfg.Style == RenderingStyle.Stereo ||
-                               this.MixCfg.Style == RenderingStyle.Surround)
+                                this.MixCfg.Style == RenderingStyle.Surround)
                             {
                                 lvol = (vol * ((pan < 128) ? 128 : (255 - pan))) / 128;
                                 rvol = (vol * ((pan > 128) ? 128 : pan)) / 128;
@@ -1009,12 +1008,9 @@ namespace SharpMod.Mixer
                 }
 
                 part = (short)((TICKLEFT < todo) ? TICKLEFT : todo);
-
                 VC_WritePortion(buf, buf_ptr, part);
-
                 TICKLEFT -= part;
                 todo -= part;
-
                 buf_ptr += samples2bytes(part);
             }
         }
@@ -1026,7 +1022,7 @@ namespace SharpMod.Mixer
         /// </summary>
         /// <param name="buf"></param>
         /// <param name="todo"></param>
-        /// <returns></returns>
+        /// <returns></returns>        
         public virtual int VC_WriteBytes(sbyte[] buf, int todo)
         {
             todo = bytes2samples(todo);
@@ -1047,7 +1043,7 @@ namespace SharpMod.Mixer
             if (MixCfg.Is16Bits)
             {
                 //memset(buf,0,todo);
-                Array.Clear(buf, 0, todo);                
+                Array.Clear(buf, 0, todo);
             }
             else
             {
@@ -1087,7 +1083,7 @@ namespace SharpMod.Mixer
 
             /*	if(md_mode & m_.DMODE_STEREO) ampshift++;*/
 
-            OnMixingFunction = null;
+            // OnMixingFunction = null;
 
             /*
            if(md_mode & m_.DMODE_INTERP)
@@ -1098,21 +1094,27 @@ namespace SharpMod.Mixer
             if (this.MixCfg.Interpolate) /*(this._dMode & DMode.DMODE_INTERP) != 0)*/
             {
                 if (this.MixCfg.Style == RenderingStyle.Surround)
-                    OnMixingFunction += new MixingFunctionHandler(this.MixSurroundInterp);
+                    SetMixFunction(5);
+                //OnMixingFunction += new MixingFunctionHandler(this.MixSurroundInterp);
                 else if (this.MixCfg.Style == RenderingStyle.Stereo)/*(this._dMode & DMode.DMODE_STEREO) != 0)*/
-                    OnMixingFunction += new MixingFunctionHandler(this.MixStereoInterp);
+                    SetMixFunction(3);
+                //OnMixingFunction += new MixingFunctionHandler(this.MixStereoInterp);
                 else
-                    OnMixingFunction += new MixingFunctionHandler(this.MixMonoInterp);
+                    SetMixFunction(2);
+                //OnMixingFunction += new MixingFunctionHandler(this.MixMonoInterp);
 
             }
             else
             {
                 if (this.MixCfg.Style == RenderingStyle.Surround)
-                    OnMixingFunction += new MixingFunctionHandler(this.MixSurroundNormal);
+                    SetMixFunction(4);
+                //OnMixingFunction += new MixingFunctionHandler(this.MixSurroundNormal);
                 else if (this.MixCfg.Style == RenderingStyle.Stereo)
-                    OnMixingFunction += new MixingFunctionHandler(this.MixStereoNormal);
+                    SetMixFunction(1);
+                //OnMixingFunction += new MixingFunctionHandler(this.MixStereoNormal);
                 else
-                    OnMixingFunction += new MixingFunctionHandler(this.MixMonoNormal);
+                    SetMixFunction(0);
+                //OnMixingFunction += new MixingFunctionHandler(this.MixMonoNormal);
             }
 
             samplesthatfit = (short)TICKLSIZE;
@@ -1122,9 +1124,63 @@ namespace SharpMod.Mixer
             TICKLEFT = 0;
         }
 
-        protected internal virtual void SampleMix(byte[] srce, int[] dest, int dest_offset, int index, int increment, short todo)
+        private int _mixFuncId;
+
+        // <summary>
+        /// Définir la fonction de mixage active.
+        /// Appeler cette méthode quand le mode change (init, changement de config)
+        /// au lieu d'utiliser += sur l'event OnMixingFunction.
+        /// 
+        /// Valeurs :
+        ///   0 = MixMonoNormal
+        ///   1 = MixStereoNormal
+        ///   2 = MixMonoInterp
+        ///   3 = MixStereoInterp
+        ///   4 = MixSurroundNormal
+        ///   5 = MixSurroundInterp
+        /// </summary>
+        public void SetMixFunction(int funcId)
         {
-            this.OnMixingFunction?.Invoke(srce, dest, dest_offset, index, increment, todo);
+            _mixFuncId = funcId;
+        }
+
+        protected internal virtual void SampleMix(byte[] srce, int[] dest,
+    int dest_offset, int index, int increment, short todo)
+        {
+            // ══ OPTIM v6 : switch direct au lieu de delegate ══
+            // Un switch sur un int est compilé en jump table par le JIT
+            // → 10-50x plus rapide qu'un delegate.Invoke() en WASM
+            switch (_mixFuncId)
+            {
+                case 0:
+                    MixMonoNormal(srce, dest, dest_offset, index, increment, todo);
+                    break;
+                case 1:
+                    MixStereoNormal(srce, dest, dest_offset, index, increment, todo);
+                    break;
+                case 2:
+                    MixMonoInterp(srce, dest, dest_offset, index, increment, todo);
+                    break;
+                case 3:
+                    MixStereoInterp(srce, dest, dest_offset, index, increment, todo);
+                    break;
+                case 4:
+                    MixSurroundNormal(srce, dest, dest_offset, index, increment, todo);
+                    break;
+                case 5:
+                    MixSurroundInterp(srce, dest, dest_offset, index, increment, todo);
+                    break;
+                default:
+                    MixStereoNormal(srce, dest, dest_offset, index, increment, todo);
+                    break;
+            }
+        }
+
+
+
+        protected internal virtual void SampleMixOld(byte[] srce, int[] dest, int dest_offset, int index, int increment, short todo)
+        {
+            // this.OnMixingFunction?.Invoke(srce, dest, dest_offset, index, increment, todo);
             /*if (iWhichSampleMixFunc >= 2)
             {
                 if (iWhichSampleMixFunc == 3)

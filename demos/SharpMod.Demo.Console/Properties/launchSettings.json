@@ -2,7 +2,7 @@
   "profiles": {
     "SharpMod.Demo.Console": {
       "commandName": "Project",
-      "commandLineArgs": "yulbrynner.mod"
+      "commandLineArgs": "dead_pixel.mod"
     }
   }
 }

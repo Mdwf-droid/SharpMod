@@ -9,40 +9,30 @@ namespace SharpMod.Demo.Blazor.Services;
 
 public class PlayerService : IDisposable
 {
-    private IJSRuntime? _js;
-    private ModulePlayer? _player;
-    private SongModule? _module;
-    private System.Threading.Timer? _uiTimer;
+    private IJSRuntime _js;
+    private ModulePlayer _player;
+    private SongModule _module;
 
-    // ── Propriétés UI ──
-    public string? ModuleName { get; private set; }
-    public string? ModuleType { get; private set; }
+    public string ModuleName { get; private set; }
+    public string ModuleType { get; private set; }
     public int ChannelCount { get; private set; }
     public int Speed { get; private set; }
     public int BPM { get; private set; } = 125;
-    public int SongPosition { get; private set; }
-    public int PatternNumber { get; private set; }
-    public int PatternPosition { get; private set; }
     public bool IsPlaying { get; private set; }
     public string StatusMessage { get; set; } = "Ready ── Drop a .MOD .S3M .XM file";
 
-    public SongModule? CurrentModule => _module;
-    public ModulePlayer? CurrentPlayer => _player;
+    public int SongPosition { get; set; }
+    public int PatternNumber { get; set; }
+    public int PatternPosition { get; set; }
 
-    // ── Events ──
-    public event Action? OnStateChanged;
+    public SongModule CurrentModule => _module;
+    public ModulePlayer CurrentPlayer => _player;
+
+    public event Action OnStateChanged;
 
     public async Task InitializeAsync(IJSRuntime js)
     {
         _js = js;
-        try
-        {
-            await js.InvokeVoidAsync("SharpModAudio.initialize");
-        }
-        catch (JSException ex)
-        {
-            Console.WriteLine($"WebAudio init error: {ex.Message}");
-        }
     }
 
     public async Task LoadModuleAsync(byte[] fileData, string fileName)
@@ -64,11 +54,12 @@ public class PlayerService : IDisposable
 
             _player = new ModulePlayer(_module);
 
-            var renderer = new WebAudioRenderer(_js!);
+            var renderer = new WebAudioRenderer(_js);
             _player.RegisterRenderer(renderer);
 
-            _player.OnGetPlayerInfos += OnPlayerInfos;
-            _player.OnCurrentModulePlayEnd += OnPlayEnd;
+            // PAS de renderer.PatternChanged
+            // PAS de timer
+            // La position est encodée dans FillBuffer
 
             ModuleName = _module.SongName;
             ModuleType = _module.ModType;
@@ -90,23 +81,12 @@ public class PlayerService : IDisposable
     {
         if (_player == null) return;
 
-        // Initialiser l'AudioContext au moment du clic utilisateur
-        // (politique autoplay des navigateurs)
-        try
-        {
-            await _js!.InvokeVoidAsync("SharpModAudio.initialize");
-        }
-        catch { /* déjà initialisé */ }
+        try { await _js.InvokeVoidAsync("SharpModAudio.initialize"); }
+        catch { }
 
         _player.Start();
         IsPlaying = true;
         StatusMessage = "Playing...";
-
-        _uiTimer = new System.Threading.Timer(_ =>
-        {
-            NotifyStateChanged();
-        }, null, 0, 100);
-
         NotifyStateChanged();
     }
 
@@ -115,7 +95,9 @@ public class PlayerService : IDisposable
         if (_player == null) return;
         _player.Stop();
         IsPlaying = false;
-        _uiTimer?.Dispose();
+        SongPosition = 0;
+        PatternNumber = 0;
+        PatternPosition = 0;
         StatusMessage = "Stopped";
         await (_js?.InvokeVoidAsync("SharpModAudio.stop") ?? ValueTask.CompletedTask);
         NotifyStateChanged();
@@ -124,31 +106,18 @@ public class PlayerService : IDisposable
     public async Task PauseAsync()
     {
         if (_player == null) return;
+
         _player.Pause();
         IsPlaying = !IsPlaying;
+
+        // Synchroniser l'état avec le JS AudioContext
+        await _js.InvokeVoidAsync("SharpModAudio.pause");
+
         StatusMessage = IsPlaying ? "Playing..." : "Paused";
-        NotifyStateChanged();
-    }
-
-    private void OnPlayerInfos(object sender, SharpModEventArgs e)
-    {
-        SongPosition = e.SongPosition;
-        PatternNumber = e.PatternNumber;
-        PatternPosition = e.PatternPosition;
-    }
-
-    private void OnPlayEnd(object sender, EventArgs e)
-    {
-        IsPlaying = false;
-        _uiTimer?.Dispose();
-        StatusMessage = "Playback finished";
         NotifyStateChanged();
     }
 
     private void NotifyStateChanged() => OnStateChanged?.Invoke();
 
-    public void Dispose()
-    {
-        _uiTimer?.Dispose();
-    }
+    public void Dispose() { }
 }
