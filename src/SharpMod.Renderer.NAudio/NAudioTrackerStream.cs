@@ -7,10 +7,12 @@ using SharpMod.Mixer;
 
 namespace SharpMod.SoundRenderer
 {
-    class NAudioTrackerStream : NAudio.Wave.WaveStream
+    public class NAudioTrackerStream : NAudio.Wave.WaveStream
     {        
         private readonly WaveFormat waveFormat;
         internal ModulePlayer Player { get; set; }
+
+        public event Action<byte[], int>? OnSamplesGenerated;
 
         public NAudioTrackerStream(ModulePlayer player)
         {
@@ -46,7 +48,9 @@ namespace SharpMod.SoundRenderer
             int readed;
             
             readed = Player.GetBytes(buffer, count);
-            
+
+            OnSamplesGenerated?.Invoke(buffer, readed);
+
             return readed;
         }
     }

@@ -13,6 +13,8 @@ namespace SharpMod.SoundRenderer
             Asio
         }
 
+        public NAudioTrackerStream? TrackerStream { get; private set; }
+
         //private ChannelsMixer _virtch;
         public ModulePlayer Player { get; set; }
         private readonly Output _output = output;

@@ -1,0 +1,110 @@
+<Window x:Class="SharpMod.Demo.Wpf.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:SharpMod.Demo.Wpf.Controls"
+        Title="SharpMod — FastTracker II"
+        Width="1100" Height="750"
+        MinWidth="800" MinHeight="500"
+        Background="#0B0E14"
+        AllowDrop="True"
+        Drop="OnDrop" DragOver="OnDragOver">
+
+    <Window.InputBindings>
+        <KeyBinding Key="O" Modifiers="Control"
+                    Command="{Binding OpenFileCommand}" />
+        <KeyBinding Key="Space"
+                    Command="{Binding PauseCommand}" />
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="70" />
+            <RowDefinition Height="50" />
+            <RowDefinition Height="80" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="130" />
+        </Grid.RowDefinitions>
+
+        <!-- ══ Transport Bar (inline) ══ -->
+        <Border Grid.Row="0" Background="#131824"
+                BorderBrush="#2A3550" BorderThickness="0,0,0,1"
+                Padding="8,6">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <Button Content="📂" Command="{Binding OpenFileCommand}"
+                            Style="{StaticResource Ft2Button}"
+                            ToolTip="Open (Ctrl+O)" />
+                    <Button Content="▶" Command="{Binding PlayCommand}"
+                            Style="{StaticResource Ft2Button}" Margin="4,0" />
+                    <Button Content="⏸" Command="{Binding PauseCommand}"
+                            Style="{StaticResource Ft2Button}" />
+                    <Button Content="⏹" Command="{Binding StopCommand}"
+                            Style="{StaticResource Ft2Button}" Margin="4,0" />
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Right">
+                    <TextBlock Text="Spd:" Foreground="#8090B0"
+                               Margin="8,0,2,0" FontSize="11" />
+                    <TextBlock Text="{Binding Speed}"
+                               Foreground="#D0D8E8" FontSize="11" />
+                    <TextBlock Text="Bpm:" Foreground="#8090B0"
+                               Margin="8,0,2,0" FontSize="11" />
+                    <TextBlock Text="{Binding Tempo}"
+                               Foreground="#D0D8E8" FontSize="11" />
+                    <TextBlock Text="Pos:" Foreground="#8090B0"
+                               Margin="8,0,2,0" FontSize="11" />
+                    <TextBlock Text="{Binding SongPosition, StringFormat='{}{0:D3}'}"
+                               Foreground="#D0D8E8" FontSize="11" />
+                    <TextBlock Text="Pat:" Foreground="#8090B0"
+                               Margin="8,0,2,0" FontSize="11" />
+                    <TextBlock Text="{Binding PatternNumber, StringFormat='{}{0:D3}'}"
+                               Foreground="#D0D8E8" FontSize="11" />
+                    <TextBlock Text="Row:" Foreground="#8090B0"
+                               Margin="8,0,2,0" FontSize="11" />
+                    <TextBlock Text="{Binding PatternPosition, StringFormat='{}{0:X2}'}"
+                               Foreground="#D0D8E8" FontSize="11" />
+                </StackPanel>
+
+                <TextBlock Text="{Binding SongName}"
+                           Foreground="#D0D8E8" FontSize="14"
+                           FontWeight="Bold" Margin="12,0"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+        </Border>
+
+        <!-- ══ Oscilloscopes par canal ══ -->
+        <Border Grid.Row="1" Background="#0A0D12"
+                BorderBrush="#2A3550" BorderThickness="0,0,0,1">
+            <controls:ScopeControl />
+        </Border>
+
+        <!-- ══ VU-meters par canal ══ -->
+        <Border Grid.Row="2" Background="#0A0D12"
+                BorderBrush="#2A3550" BorderThickness="0,0,0,1">
+            <controls:VuMeterControl />
+        </Border>
+
+        <!-- ══ Spectrum Analyzer ══ -->
+        <Border Grid.Row="3" Background="#0A0D12"
+                BorderBrush="#2A3550" BorderThickness="0,0,0,1">
+            <controls:SpectrumControl />
+        </Border>
+
+        <!-- ══ Pattern Editor ══ -->
+        <Border Grid.Row="4" Background="#0A0D12">
+            <controls:PatternEditorControl />
+        </Border>
+
+        <!-- ══ Instrument List ══ -->
+        <Border Grid.Row="5" Background="#131824"
+                BorderBrush="#2A3550" BorderThickness="0,1,0,0">
+            <controls:InstrumentListControl />
+        </Border>
+    </Grid>
+</Window>
+    

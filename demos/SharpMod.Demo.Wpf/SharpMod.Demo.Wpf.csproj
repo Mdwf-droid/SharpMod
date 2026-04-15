@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>SharpMod.Demo.Wpf</RootNamespace>
+    <AssemblyName>SharpMod.Demo.Wpf</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ApplicationIcon>Assets\sharpmod.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- SkiaSharp pour le rendu custom -->
+    <PackageReference Include="SkiaSharp.Views.WPF" Version="3.119.2" />
+
+    <!-- MVVM -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SharpMod.Core\SharpMod.Core.csproj" />
+    <ProjectReference Include="..\..\src\SharpMod.Renderer.NAudio\SharpMod.Renderer.NAudio.csproj" />
+  </ItemGroup>
+
+  <!-- Police embarquée -->
+  <ItemGroup>
+    <Resource Include="Fonts\ShareTechMono-Regular.ttf" />
+  </ItemGroup>
+
+</Project>
