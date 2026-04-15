@@ -1,0 +1,135 @@
+@using SharpMod.Demo.Blazor.Services
+@using SharpMod.Song
+@inject PlayerService Player
+@inject IJSRuntime JS
+@implements IDisposable
+
+<div class="ft2-pattern-area ft2-panel">
+
+    <div class="ft2-chan-headers ft2-panel">
+        <div class="ft2-chan-header-rownum"></div>
+        <div class="ft2-chan-headers-inner">
+            @for (int c = 0; c < channelCount; c++)
+            {
+                <div class="ft2-chan-header">Ch @((c + 1).ToString("D2"))</div>
+            }
+        </div>
+    </div>
+
+    <div class="ft2-pattern-grid-wrapper ft2-panel-inset">
+        @if (currentPattern != null)
+        {
+            <div class="ft2-pattern-grid" id="patternGrid">
+                <div class="ft2-pattern-grid-inner">
+                    @for (int r = 0; r < rowCount; r++)
+                    {
+                        var row = r;
+                        var isActive = row == Player.PatternPosition;
+                        var isBar = row % 4 == 0 && !isActive;
+
+                        <div class="ft2-row @(isActive ? "active" : "") @(isBar ? "bar" : "")">
+                            <span class="row-num">@row.ToString("X2")</span>
+                            @for (int c = 0; c < channelCount; c++)
+                            {
+                                var cell = GetCell(row, c);
+                                <span class="ft2-cell">
+                                    <span class="note">@cell.Note</span>
+                                    <span class="sep"> </span>
+                                    <span class="inst">@cell.Inst</span>
+                                    <span class="sep"> </span>
+                                    <span class="vol">@cell.Vol</span>
+                                    <span class="sep"> </span>
+                                    <span class="fx">@cell.Fx</span>
+                                    <span class="fxd">@cell.FxD</span>
+                                </span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="ft2-dropzone">
+                Load a module to start ── .MOD .S3M .XM
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private static readonly string[] NoteNames =
+        { "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-" };
+
+    private Pattern? currentPattern;
+    private int channelCount = 4;
+    private int rowCount = 64;
+    private int lastPatternNumber = -1;
+
+    protected override void OnInitialized()
+    {
+        Player.OnStateChanged += Refresh;
+        UpdatePattern();
+    }
+
+    private void Refresh()
+    {
+        UpdatePattern();
+        InvokeAsync(async () =>
+        {
+            StateHasChanged();
+            if (Player.IsPlaying && currentPattern != null)
+            {
+                try
+                {
+                    await JS.InvokeVoidAsync("ft2ScrollToActiveRow",
+                        "patternGrid", Player.PatternPosition, 14, rowCount);
+                }
+                catch { }
+            }
+        });
+    }
+
+    private void UpdatePattern()
+    {
+        var module = Player.CurrentModule;
+        if (module == null) return;
+        channelCount = module.ChannelsCount;
+        if (Player.PatternNumber >= 0 && Player.PatternNumber < module.Patterns.Count)
+        {
+            if (Player.PatternNumber != lastPatternNumber)
+            {
+                currentPattern = module.Patterns[Player.PatternNumber];
+                rowCount = currentPattern.RowsCount;
+                lastPatternNumber = Player.PatternNumber;
+            }
+        }
+    }
+
+    private (string Note, string Inst, string Vol, string Fx, string FxD) GetCell(int row, int channel)
+    {
+        if (currentPattern == null || channel >= currentPattern.Tracks.Count)
+            return ("···", "··", "··", "·", "··");
+
+        var track = currentPattern.Tracks[channel];
+        if (track?.Cells == null || row >= track.Cells.Count)
+            return ("···", "··", "··", "·", "··");
+
+        var pc = track.Cells[row];
+        if (pc == null)
+            return ("···", "··", "··", "·", "··");
+
+        string note = (pc.Note.HasValue && pc.Note.Value >= 0 && pc.Note.Value < 12)
+            ? $"{NoteNames[pc.Note.Value]}{(pc.Octave.HasValue ? (pc.Octave.Value + 1).ToString() : "-")}"
+            : "···";
+
+        string inst = pc.Instrument != 0 ? pc.Instrument.ToString("D2") : "··";
+        string vol = "··";
+        string fx = (pc.Effect != 0 || pc.EffectData != 0) ? $"{pc.Effect:X1}" : "·";
+        string fxd = (pc.Effect != 0 || pc.EffectData != 0) ? $"{pc.EffectData:X2}" : "··";
+
+        return (note, inst, vol, fx, fxd);
+    }
+
+    public void Dispose() => Player.OnStateChanged -= Refresh;
+}

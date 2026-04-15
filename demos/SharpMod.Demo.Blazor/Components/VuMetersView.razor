@@ -1,0 +1,49 @@
+@using SharpMod.Demo.Blazor.Services
+@inject PlayerService Player
+@implements IDisposable
+
+<div class="st3-vu-meters">
+    @for (int c = 0; c < channelCount; c++)
+    {
+        var level = GetLevel(c);
+        <div class="vu-bar">
+            @for (int s = 0; s < 8; s++)
+            {
+                var segIdx = s;
+                var isActive = segIdx < level;
+                var colorClass = segIdx >= 6 ? "red" : segIdx >= 4 ? "yellow" : "green";
+                <div class="vu-segment @(isActive ? "active" : "inactive") @colorClass"></div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private int channelCount = 4;
+    private Random rng = new();
+
+    protected override void OnInitialized()
+    {
+        Player.OnStateChanged += Refresh;
+    }
+
+    private void Refresh()
+    {
+        channelCount = Math.Max(Player.ChannelCount, 4);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private int GetLevel(int channel)
+    {
+        if (!Player.IsPlaying) return 0;
+
+        // TODO: remplacer par les vraies données de volume par canal
+        // depuis Player.CurrentPlayer.ChannelsMixer.channelInfo[channel]
+        return rng.Next(1, 8);
+    }
+
+    public void Dispose()
+    {
+        Player.OnStateChanged -= Refresh;
+    }
+}

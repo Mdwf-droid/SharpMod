@@ -1,0 +1,83 @@
+﻿@using SharpMod.Demo.Blazor.Services
+@inject PlayerService Player
+@inject IJSRuntime JS
+@implements IDisposable
+
+<div class="ft2-scopes-row">
+    @for (int c = 0; c < channelCount; c++)
+    {
+        var ch = c;
+        var level = GetLevel(ch);
+
+        <div class="ft2-scope-cell ft2-panel-inset">
+            @* Scope waveform placeholder *@
+            <div class="ft2-scope-wave">
+                <span class="ch-label">@((ch + 1).ToString("D2"))</span>
+            </div>
+
+            @* VU Meter vertical — 8 segments *@
+            <div class="ft2-vu-col">
+                @for (int s = 0; s < 8; s++)
+                {
+                    var seg = s;
+                    string cls;
+                    if (seg < level)
+                    {
+                        if (seg >= 6) cls = "red";
+                        else if (seg >= 4) cls = "yellow";
+                        else cls = "green";
+                    }
+                    else
+                    {
+                        cls = "off";
+                    }
+                    <div class="ft2-vu-seg @cls"></div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private int channelCount = 4;
+    private int globalVu = 0;
+    private Random rng = new();
+
+    protected override void OnInitialized()
+    {
+        Player.OnStateChanged += Refresh;
+    }
+
+    private async void Refresh()
+    {
+        channelCount = Math.Max(Player.ChannelCount, 1);
+
+        // Récupérer le VU global depuis WebAudio
+        if (Player.IsPlaying)
+        {
+            try
+            {
+                globalVu = await JS.InvokeAsync<int>("ft2GetVuLevel");
+            }
+            catch { globalVu = 0; }
+        }
+        else
+        {
+            globalVu = 0;
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private int GetLevel(int channel)
+    {
+        if (!Player.IsPlaying) return 0;
+        // Simuler une variation par canal basée sur le VU global
+        // TODO: brancher sur les vrais niveaux par canal de ChannelsMixer
+        var variation = rng.Next(-15, 15);
+        var pct = Math.Clamp(globalVu + variation, 0, 100);
+        return (int)(pct / 100.0 * 8);
+    }
+
+    public void Dispose() => Player.OnStateChanged -= Refresh;
+}

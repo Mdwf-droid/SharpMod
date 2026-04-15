@@ -1,0 +1,123 @@
+@page "/"
+@using SharpMod.Demo.Blazor.Services
+@using SharpMod.Demo.Blazor.Components
+@using System.IO
+@inject PlayerService Player
+@inject IJSRuntime JS
+
+<div class="ft2-screen">
+
+    @* ── Title Bar ── *@
+    <div class="ft2-titlebar ft2-panel">
+        <span class="logo">SharpMod</span>
+        <span class="subtitle">── FastTracker II Style ──</span>
+        <InputFile OnChange="OnFileSelected" style="display:none" id="fileInput" />
+        <button class="ft2-btn" @onclick="TriggerFileInput">📂 Load</button>
+    </div>
+
+    @* ── Top: Info + FFT + Instruments ── *@
+    <div class="ft2-top">
+
+        @* Left: Song Info + Transport *@
+        <div class="ft2-song-info">
+            <div class="ft2-panel" style="flex:1;">
+                <div class="ft2-info-grid">
+                    <span class="label">Song:</span>
+                    <span class="value">@(Player.ModuleName ?? "---")</span>
+                    <span class="label">Type:</span>
+                    <span class="value">@(Player.ModuleType ?? "---")</span>
+                    <span class="label">Channels:</span>
+                    <span class="value">@Player.ChannelCount</span>
+                    <span class="label">BPM:</span>
+                    <span class="value">@Player.BPM</span>
+                    <span class="label">Speed:</span>
+                    <span class="value">@Player.Speed</span>
+                    <span class="label">Position:</span>
+                    <span class="value">@Player.SongPosition.ToString("D3") / @Player.PatternNumber.ToString("D3") / @Player.PatternPosition.ToString("D2")</span>
+                </div>
+            </div>
+            <div class="ft2-transport ft2-panel">
+                <button class="ft2-btn ft2-btn-play @(Player.IsPlaying ? "active" : "")" @onclick="OnPlay">▶ Play</button>
+                <button class="ft2-btn ft2-btn-stop" @onclick="OnStop">■ Stop</button>
+                <button class="ft2-btn ft2-btn-pause" @onclick="OnPause">❚❚ Pause</button>
+            </div>
+        </div>
+
+        @* Center: FFT Spectrum Analyzer *@
+        <div class="ft2-fft-panel ft2-panel">
+            <div class="panel-title">Spectrum</div>
+            <div class="ft2-fft-canvas-wrap ft2-panel-inset">
+                <canvas id="fftCanvas"></canvas>
+            </div>
+        </div>
+
+        @* Right: Instrument List *@
+        <div class="ft2-instrument-panel ft2-panel">
+            <div class="panel-title">Instruments</div>
+            <div class="ft2-inst-list ft2-panel-inset">
+                @if (Player.CurrentModule?.Instruments != null)
+                {
+                    var idx = 1;
+                    @foreach (var inst in Player.CurrentModule.Instruments)
+                    {
+                        <div class="ft2-inst-row">
+                            <span class="num">@(idx.ToString("D2"))</span>
+                            <span class="name">@(inst.InsName ?? "")</span>
+                        </div>
+                        idx++;
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    @* ── Scopes + VU Meters (1 per channel) ── *@
+    <ScopeVuView />
+
+    @* ── Pattern Editor ── *@
+    <PatternEditorView />
+
+    @* ── Status Bar ── *@
+    <div class="ft2-statusbar ft2-panel">
+        <span>@Player.StatusMessage</span>
+        <span>SharpMod ── github.com/Mdwf-droid/SharpMod</span>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await Player.InitializeAsync(JS);
+    }
+
+    private async Task OnPlay()
+    {
+        await Player.PlayAsync();
+        // Démarrer la FFT animation
+        try { await JS.InvokeVoidAsync("ft2StartFFT", "fftCanvas"); } catch { }
+    }
+
+    private async Task OnStop()
+    {
+        await Player.StopAsync();
+        try { await JS.InvokeVoidAsync("ft2StopFFT"); } catch { }
+    }
+
+    private async Task OnPause() => await Player.PauseAsync();
+
+    private async Task TriggerFileInput()
+    {
+        await JS.InvokeVoidAsync("triggerFileInput", "fileInput");
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        await Player.LoadModuleAsync(ms.ToArray(), file.Name);
+        StateHasChanged();
+    }
+}

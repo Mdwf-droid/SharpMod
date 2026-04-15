@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SharpMod.Demo.Console": {
+      "commandName": "Project",
+      "commandLineArgs": "yulbrynner.mod"
+    }
+  }
+}

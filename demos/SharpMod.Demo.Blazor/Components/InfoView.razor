@@ -1,0 +1,30 @@
+@using SharpMod.Demo.Blazor.Services
+@inject PlayerService Player
+
+<div style="padding: 8px; flex: 1;">
+    <pre style="color: var(--dos-cyan);">
+╔══════════════════════════════════════════════╗
+║        SharpMod v2.0 ── Module Info         ║
+╠══════════════════════════════════════════════╣
+║                                              ║
+║  Song:     @((Player.ModuleName ?? "---").PadRight(34))║
+║  Type:     @((Player.ModuleType ?? "---").PadRight(34))║
+║  Channels: @(Player.ChannelCount.ToString().PadRight(34))║
+║  Speed:    @(Player.Speed.ToString().PadRight(34))║
+║  BPM:      @(Player.BPM.ToString().PadRight(34))║
+║  Position: @($"{Player.SongPosition:D3}".PadRight(34))║
+║  Pattern:  @($"{Player.PatternNumber:D3}".PadRight(34))║
+║  Row:      @($"{Player.PatternPosition:D2}".PadRight(34))║
+║                                              ║
+╚══════════════════════════════════════════════╝
+    </pre>
+
+    @if (Player.CurrentModule?.Comment != null)
+    {
+        <pre style="color: var(--dos-lightgray); margin-top: 8px;">
+╔══ Module Comment ══╗
+@Player.CurrentModule.Comment
+╚════════════════════╝
+        </pre>
+    }
+</div>

@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>SharpMod</RootNamespace>
+    <AssemblyName>SharpMod.Core</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Description>SharpMod Core - A .NET port of MikMod soundtrack player library</Description>
+    <Authors>Mdwf-droid</Authors>
+    <PackageId>SharpMod.Core</PackageId>
+    <PackageTags>mod;tracker;music;mikmod;protracker;screamtracker;fasttracker</PackageTags>
+    <RepositoryUrl>https://github.com/Mdwf-droid/SharpMod</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Version>2.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Update="Exceptions\SharpModExceptionResources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SharpModExceptionResources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Update="Exceptions\SharpModExceptionResources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>SharpModExceptionResources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+	</ItemGroup>
+</Project>

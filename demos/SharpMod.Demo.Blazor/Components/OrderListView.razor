@@ -1,0 +1,26 @@
+@using SharpMod.Demo.Blazor.Services
+@inject PlayerService Player
+
+<div style="padding: 8px;">
+    <div style="color: var(--dos-cyan); margin-bottom: 4px;">
+        ╔══ Order List ══╗
+    </div>
+    <div class="st3-orders">
+        @if (Player.CurrentModule?.Positions != null)
+        {
+            var idx = 0;
+            @foreach (var order in Player.CurrentModule.Positions)
+            {
+                var isActive = idx == Player.SongPosition;
+                <span class="order-item @(isActive ? "active" : "")">
+                    @order.ToString("D2")
+                </span>
+                idx++;
+            }
+        }
+        else
+        {
+            <span style="color: var(--dos-darkgray);">No module loaded</span>
+        }
+    </div>
+</div>

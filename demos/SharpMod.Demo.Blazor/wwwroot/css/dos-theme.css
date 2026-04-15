@@ -1,0 +1,376 @@
+/* ══════════════════════════════════════════════
+   SCREAM TRACKER 3 – DOS TEXT MODE THEME
+   Palette 16 couleurs EGA/VGA
+   ══════════════════════════════════════════════ */
+
+:root {
+    /* Palette DOS 16 couleurs */
+    --dos-black:        #000000;
+    --dos-blue:         #0000AA;
+    --dos-green:        #00AA00;
+    --dos-cyan:         #00AAAA;
+    --dos-red:          #AA0000;
+    --dos-magenta:      #AA00AA;
+    --dos-brown:        #AA5500;
+    --dos-lightgray:    #AAAAAA;
+    --dos-darkgray:     #555555;
+    --dos-lightblue:    #5555FF;
+    --dos-lightgreen:   #55FF55;
+    --dos-lightcyan:    #55FFFF;
+    --dos-lightred:     #FF5555;
+    --dos-lightmagenta: #FF55FF;
+    --dos-yellow:       #FFFF55;
+    --dos-white:        #FFFFFF;
+
+    /* Couleurs ST3 spécifiques */
+    --st3-bg:           var(--dos-black);
+    --st3-text:         var(--dos-lightgray);
+    --st3-header-bg:    var(--dos-blue);
+    --st3-header-text:  var(--dos-white);
+    --st3-highlight:    var(--dos-yellow);
+    --st3-cursor:       var(--dos-lightcyan);
+    --st3-border:       var(--dos-cyan);
+    --st3-active-row:   var(--dos-blue);
+    --st3-note:         var(--dos-white);
+    --st3-instrument:   var(--dos-lightgreen);
+    --st3-volume:       var(--dos-lightcyan);
+    --st3-effect:       var(--dos-yellow);
+    --st3-statusbar-bg: var(--dos-blue);
+
+    /* Dimensions texte mode */
+    --char-width:  9px;
+    --char-height: 16px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--st3-bg);
+    color: var(--st3-text);
+    font-family: 'IBM VGA', monospace;
+    font-size: 16px;
+    line-height: 16px;
+    letter-spacing: 0;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: unset;
+    font-smooth: never;
+    image-rendering: pixelated;
+}
+
+/* ── Scanlines CRT (optionnel) ── */
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 1px,
+        rgba(0, 0, 0, 0.12) 1px,
+        rgba(0, 0, 0, 0.12) 2px
+    );
+    z-index: 9999;
+}
+
+/* ── Loading ── */
+.dos-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    color: var(--dos-lightgray);
+}
+
+.blink {
+    animation: dos-blink 1s step-end infinite;
+}
+
+@keyframes dos-blink {
+    50% { opacity: 0; }
+}
+
+/* ── Layout principal ── */
+.st3-screen {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 720px;  /* 80 colonnes × 9px */
+    margin: 0 auto;
+}
+
+/* ── Header / Title Bar ── */
+.st3-header {
+    background: var(--st3-header-bg);
+    color: var(--st3-header-text);
+    padding: 0;
+    text-align: center;
+    height: 16px;
+    line-height: 16px;
+    white-space: nowrap;
+}
+
+/* ── Tab Bar (F1-F5) ── */
+.st3-tabs {
+    display: flex;
+    background: var(--dos-black);
+    border-bottom: 1px solid var(--st3-border);
+    height: 16px;
+}
+
+.st3-tab {
+    padding: 0 8px;
+    cursor: pointer;
+    color: var(--dos-lightgray);
+    background: var(--dos-black);
+    border: none;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 16px;
+    height: 16px;
+}
+
+.st3-tab:hover {
+    color: var(--dos-white);
+}
+
+.st3-tab.active {
+    background: var(--st3-header-bg);
+    color: var(--dos-white);
+}
+
+.st3-tab kbd {
+    color: var(--dos-lightred);
+}
+
+/* ── Info Bar ── */
+.st3-info {
+    display: flex;
+    gap: 16px;
+    background: var(--dos-black);
+    color: var(--dos-lightgray);
+    padding: 0 4px;
+    height: 48px;
+    border-bottom: 1px solid var(--st3-border);
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.st3-info .label {
+    color: var(--dos-cyan);
+}
+
+.st3-info .value {
+    color: var(--dos-white);
+}
+
+/* ── Pattern Editor ── */
+.st3-pattern {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    background: var(--dos-black);
+}
+
+.st3-pattern-header {
+    display: flex;
+    background: var(--st3-header-bg);
+    color: var(--dos-yellow);
+    height: 16px;
+    line-height: 16px;
+    padding: 0 2px;
+}
+
+.st3-pattern-row {
+    display: flex;
+    height: 16px;
+    line-height: 16px;
+    padding: 0 2px;
+}
+
+.st3-pattern-row.active {
+    background: var(--st3-active-row);
+}
+
+.st3-pattern-row.bar {
+    color: var(--dos-darkgray);
+    background: rgba(85, 85, 85, 0.1);
+}
+
+.row-number {
+    color: var(--dos-darkgray);
+    width: 27px; /* 3 chars */
+    text-align: right;
+    margin-right: 4px;
+}
+
+.st3-pattern-row.active .row-number {
+    color: var(--dos-white);
+}
+
+.channel-cell {
+    display: flex;
+    gap: 0;
+    margin: 0 1px;
+}
+
+.cell-note       { color: var(--st3-note); width: 27px; }
+.cell-instrument { color: var(--st3-instrument); width: 18px; }
+.cell-volume     { color: var(--st3-volume); width: 18px; }
+.cell-effect     { color: var(--st3-effect); width: 27px; }
+
+.cell-separator  {
+    color: var(--dos-darkgray);
+    width: 9px;
+    text-align: center;
+}
+
+/* ── VU-Meters ASCII ── */
+.st3-vu-meters {
+    display: flex;
+    gap: 2px;
+    height: 32px;
+    padding: 0 4px;
+    background: var(--dos-black);
+    border-top: 1px solid var(--st3-border);
+    align-items: flex-end;
+}
+
+.vu-bar {
+    display: flex;
+    flex-direction: column-reverse;
+    width: 18px;
+    height: 100%;
+}
+
+.vu-segment {
+    height: 4px;
+    width: 100%;
+    transition: opacity 0.05s;
+}
+
+.vu-segment.active.green  { background: var(--dos-lightgreen); }
+.vu-segment.active.yellow { background: var(--dos-yellow); }
+.vu-segment.active.red    { background: var(--dos-lightred); }
+.vu-segment.inactive      { background: var(--dos-darkgray); opacity: 0.2; }
+
+/* ── Status Bar ── */
+.st3-statusbar {
+    background: var(--st3-statusbar-bg);
+    color: var(--dos-white);
+    height: 16px;
+    line-height: 16px;
+    padding: 0 4px;
+    display: flex;
+    justify-content: space-between;
+    white-space: nowrap;
+}
+
+/* ── Box Drawing borders ── */
+.dos-box {
+    border: 1px solid var(--st3-border);
+    position: relative;
+}
+
+.dos-box-title {
+    position: absolute;
+    top: -8px;
+    left: 8px;
+    background: var(--dos-black);
+    padding: 0 4px;
+    color: var(--dos-white);
+}
+
+/* ── Transport Controls ── */
+.st3-transport {
+    display: flex;
+    gap: 8px;
+    padding: 0 4px;
+    height: 16px;
+    align-items: center;
+}
+
+.st3-transport button {
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: inherit;
+    color: var(--dos-lightgray);
+    cursor: pointer;
+    padding: 0 4px;
+    height: 16px;
+    line-height: 16px;
+}
+
+.st3-transport button:hover {
+    color: var(--dos-white);
+    background: var(--dos-blue);
+}
+
+.st3-transport button.playing {
+    color: var(--dos-lightgreen);
+}
+
+/* ── Instrument List ── */
+.st3-instruments {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--dos-black);
+}
+
+.st3-instrument-row {
+    display: flex;
+    height: 16px;
+    line-height: 16px;
+    padding: 0 4px;
+}
+
+.st3-instrument-row:hover {
+    background: var(--dos-blue);
+}
+
+.inst-number   { color: var(--dos-darkgray); width: 27px; }
+.inst-name     { color: var(--dos-lightgray); flex: 1; }
+.inst-size     { color: var(--dos-cyan); width: 54px; text-align: right; }
+.inst-loop     { color: var(--dos-yellow); width: 36px; text-align: center; }
+
+/* ── Order List ── */
+.st3-orders {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    padding: 4px;
+}
+
+.order-item {
+    width: 27px;
+    height: 16px;
+    text-align: center;
+    color: var(--dos-lightgray);
+}
+
+.order-item.active {
+    background: var(--dos-blue);
+    color: var(--dos-white);
+}
+
+/* ── Drag & drop zone ── */
+.drop-zone {
+    border: 1px dashed var(--dos-cyan);
+    padding: 16px;
+    text-align: center;
+    color: var(--dos-darkgray);
+}
+
+.drop-zone.dragging {
+    border-color: var(--dos-lightcyan);
+    color: var(--dos-lightcyan);
+    background: rgba(0, 170, 170, 0.1);
+}

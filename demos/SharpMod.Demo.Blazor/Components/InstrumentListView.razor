@@ -1,0 +1,36 @@
+@using SharpMod.Demo.Blazor.Services
+@inject PlayerService Player
+
+<div class="st3-instruments">
+    <div class="st3-pattern-header">
+        <span class="inst-number">No.</span>
+        <span class="inst-name">Instrument Name</span>
+        <span class="inst-size">Size</span>
+        <span class="inst-loop">Loop</span>
+    </div>
+
+    @if (Player.CurrentModule?.Instruments != null)
+    {
+        var idx = 1;
+        @foreach (var inst in Player.CurrentModule.Instruments)
+        {
+            <div class="st3-instrument-row">
+                <span class="inst-number">@(idx.ToString("D2")).</span>
+                <span class="inst-name">@(inst.InsName ?? "---")</span>
+                <span class="inst-size">
+                    @(inst.Samples?.FirstOrDefault()?.SampleBytes?.Length.ToString("N0") ?? "0")
+                </span>
+                <span class="inst-loop">
+                    @(inst.Samples?.FirstOrDefault()?.LoopStart > 0 ? "Yes" : "No")
+                </span>
+            </div>
+            idx++;
+        }
+    }
+    else
+    {
+        <div style="padding: 16px; color: var(--dos-darkgray);">
+            No module loaded
+        </div>
+    }
+</div>
