@@ -1,0 +1,62 @@
+name: Deploy Blazor WASM to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+
+  # Permet de lancer manuellement depuis l'onglet Actions
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout du code ──
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Setup .NET ──
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # ── 3. Publish en Release ──
+      - name: Publish Blazor WASM
+        run: >
+          dotnet publish
+          demos/SharpMod.Demo.Blazor/SharpMod.Demo.Blazor.csproj
+          -c Release
+          -o release
+
+      # ── 4. Réécrire le base href pour GitHub Pages ──
+      #    En local  : <base href="/" />
+      #    Sur GH    : <base href="/SharpMod/" />
+      - name: Rewrite base href
+        run: >
+          sed -i 's|<base href="/" />|<base href="/SharpMod/" />|g'
+          release/wwwroot/index.html
+
+      # ── 5. Copier index.html → 404.html (SPA routing) ──
+      #    GitHub Pages retourne 404.html pour les routes inconnues
+      #    → Blazor prend le relais côté client
+      - name: Copy index.html to 404.html
+        run: cp release/wwwroot/index.html release/wwwroot/404.html
+
+      # ── 6. Ajouter .nojekyll ──
+      #    Sans ce fichier, GitHub Pages ignore les dossiers _framework/
+      #    car Jekyll filtre les dossiers commençant par _
+      - name: Add .nojekyll
+        run: touch release/wwwroot/.nojekyll
+
+      # ── 7. Déployer sur la branche gh-pages ──
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: release/wwwroot
+          force_orphan: true
