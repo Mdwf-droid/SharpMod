@@ -126,18 +126,18 @@ player.Start();
 
 ```
 ┌──────────────────────────────────────────────────┐
-│                  Your Application                 │
+│                  Your Application                │
 ├──────────────────────────────────────────────────┤
-│              ModulePlayer (playback)              │
+│              ModulePlayer (playback)             │
 │         ┌──────────┴──────────┐                  │
-│    SongModule           ChannelsMixer             │
+│    SongModule           ChannelsMixer            │
 │   (parsed data)      (audio rendering)           │
 ├──────────────────────────────────────────────────┤
 │  ModuleLoader     │         IRenderer            │
 │  ┌─────────────┐  │  ┌────────────────────────┐  │
-│  │ MOD Loader   │  │  │ NAudioWaveChannelDriver│  │
-│  │ S3M Loader   │  │  │ WebAudio (JS Interop)  │  │
-│  │ XM Loader    │  │  │ Your custom renderer   │  │
+│  │ MOD Loader  │  │  │ NAudioWaveChannelDriver│  │
+│  │ S3M Loader  │  │  │ WebAudio (JS Interop)  │  │
+│  │ XM Loader   │  │  │ Your custom renderer   │  │
 │  └─────────────┘  │  └────────────────────────┘  │
 └──────────────────────────────────────────────────┘
           SharpMod.Core              Renderers
