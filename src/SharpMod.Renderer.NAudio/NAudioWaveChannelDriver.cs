@@ -13,7 +13,7 @@ namespace SharpMod.SoundRenderer
             Asio
         }
 
-        public NAudioTrackerStream? TrackerStream { get; private set; }
+        public NAudioTrackerStream? TrackerStream => _naudioTrackerStream;
 
         //private ChannelsMixer _virtch;
         public ModulePlayer Player { get; set; }
@@ -44,6 +44,9 @@ namespace SharpMod.SoundRenderer
         public void Init()
         {
             CreateWaveOut();
+
+            _naudioTrackerStream = new NAudioTrackerStream(Player);
+            waveOut.Init(_naudioTrackerStream);
             //return 1;
         }
 
@@ -99,8 +102,7 @@ namespace SharpMod.SoundRenderer
             if (waveOut == null)
                 CreateWaveOut();
 
-            _naudioTrackerStream = new NAudioTrackerStream(Player);
-            waveOut.Init(_naudioTrackerStream);
+           
             
             waveOut.Play();
         }

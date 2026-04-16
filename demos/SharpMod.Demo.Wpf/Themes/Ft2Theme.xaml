@@ -1,0 +1,75 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--  ═══ Palette FT2 (WPF Brushes — synchro avec Ft2Theme.cs) ═══  -->
+    <Color x:Key="Ft2Bg">#0B0E14</Color>
+    <Color x:Key="Ft2Panel">#101520</Color>
+    <Color x:Key="Ft2PanelLight">#1A2030</Color>
+    <Color x:Key="Ft2Border">#2A3550</Color>
+    <Color x:Key="Ft2Text">#8090B0</Color>
+    <Color x:Key="Ft2TextBright">#D0D8E8</Color>
+    <Color x:Key="Ft2Accent">#FFD040</Color>
+
+    <SolidColorBrush x:Key="BgBrush" Color="{StaticResource Ft2Bg}" />
+    <SolidColorBrush x:Key="PanelBrush" Color="{StaticResource Ft2Panel}" />
+    <SolidColorBrush x:Key="PanelLightBrush" Color="{StaticResource Ft2PanelLight}" />
+    <SolidColorBrush x:Key="Ft2BorderBrush" Color="{StaticResource Ft2Border}" />
+    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource Ft2Text}" />
+    <SolidColorBrush x:Key="TextBrightBrush" Color="{StaticResource Ft2TextBright}" />
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource Ft2Accent}" />
+
+    <!--  ═══ Bouton transport ═══  -->
+    <Style x:Key="TransportButton" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource PanelLightBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource TextBrightBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Ft2BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="12,4" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="2">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{StaticResource Ft2BorderBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource BgBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  ═══ Panel ═══  -->
+    <Style x:Key="Ft2Panel" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Ft2BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <!--  ═══ Labels ═══  -->
+    <Style x:Key="Ft2Label" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    </Style>
+
+    <Style x:Key="Ft2Value" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource TextBrightBrush}" />
+    </Style>
+
+</ResourceDictionary>

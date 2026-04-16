@@ -1,81 +1,53 @@
-﻿using System;
-using SharpMod.Demo.Wpf.Themes;
+﻿using SharpMod.Demo.Wpf.Themes;
 using SkiaSharp;
+using System;
 
 namespace SharpMod.Demo.Wpf.Renderers;
 
-/// <summary>
-/// Dessine le spectrum analyzer (barres verticales, style FT2).
-/// Données : float[] bands (0..1), int bandCount.
-/// </summary>
 public class SpectrumRenderer
 {
-    private readonly SKPaint _gridPaint = new()
+    private readonly SKPaint _barPaint = new()
     {
-        Color = Ft2Theme.ScopeLine,
-        StrokeWidth = 0.5f,
+        Style = SKPaintStyle.Fill,
+        IsAntialias = false
     };
 
-    /// <summary>
-    /// Dessine le spectrum.
-    /// </summary>
-    /// <param name="canvas">SKCanvas SkiaSharp</param>
-    /// <param name="size">Taille du contrôle</param>
-    /// <param name="bands">float[bandCount] — niveaux 0..1</param>
-    /// <param name="bandCount">Nombre de bandes</param>
-    public void Draw(SKCanvas canvas, SKSize size, float[] bands, int bandCount)
+    public void Draw(SKCanvas canvas, SKSize size,
+                     float[] bands, int bandCount)
     {
-        canvas.Clear(Ft2Theme.PanelInset);
+        float w = size.Width, h = size.Height;
+        canvas.Clear(Ft2Theme.Background);
 
-        if (bands == null || bandCount <= 0)
-            return;
+        if (bands == null || bands.Length == 0 || bandCount == 0) return;
 
-        float barW = size.Width / bandCount;
-        float gap = Math.Max(1f, barW * 0.15f);
-        float effectiveW = barW - gap;
+        int count = Math.Min(bands.Length, bandCount);
+        float barWidth = w / count;
+        float gap = Math.Max(1, barWidth * 0.15f);
 
-        // Grille horizontale
-        for (int g = 1; g <= 4; g++)
+        for (int i = 0; i < count; i++)
         {
-            float gy = size.Height * g / 5f;
-            canvas.DrawLine(0, gy, size.Width, gy, _gridPaint);
-        }
-
-        for (int b = 0; b < bandCount && b < bands.Length; b++)
-        {
-            float level = Math.Max(0, Math.Min(1, bands[b]));
-            float barH = level * (size.Height - 2);
-            float x = b * barW + gap / 2f;
+            float val = Math.Clamp(bands[i], 0f, 1f);
+            float barH = val * h;
+            float x = i * barWidth;
 
             if (barH < 1) continue;
 
-            // Gradient vert → jaune → rouge
-            float greenZone = size.Height * 0.5f;
-            float yellowZone = size.Height * 0.3f;
+            // Couleur identique au Blazor : vert→jaune→rouge
+            byte r, g;
+            if (val < 0.5f)
+            {
+                r = (byte)Math.Min(255, val * 384);
+                g = 192;
+            }
+            else
+            {
+                r = 192;
+                g = (byte)Math.Max(0, (1f - (val - 0.5f) * 2f) * 192);
+            }
 
-            float greenH = Math.Min(barH, greenZone);
-            float yellowH = Math.Min(Math.Max(0, barH - greenH), yellowZone);
-            float redH = Math.Max(0, barH - greenH - yellowH);
-
-            // Vert (bas)
-            using (var p = new SKPaint { Color = Ft2Theme.VuGreen })
-                canvas.DrawRect(x, size.Height - greenH, effectiveW, greenH, p);
-
-            // Jaune (milieu)
-            if (yellowH > 0)
-                using (var p = new SKPaint { Color = Ft2Theme.VuYellow })
-                    canvas.DrawRect(x, size.Height - greenH - yellowH,
-                        effectiveW, yellowH, p);
-
-            // Rouge (haut)
-            if (redH > 0)
-                using (var p = new SKPaint { Color = Ft2Theme.VuRed })
-                    canvas.DrawRect(x, size.Height - barH,
-                        effectiveW, redH, p);
-
-            // Peak cap
-            using (var p = new SKPaint { Color = new SKColor(0xFFD0D8E8) })
-                canvas.DrawRect(x, size.Height - barH - 2, effectiveW, 2, p);
+            _barPaint.Color = new SKColor(r, g, 40);
+            canvas.DrawRect(x + gap * 0.5f, h - barH,
+                            barWidth - gap, barH, _barPaint);
         }
     }
 }

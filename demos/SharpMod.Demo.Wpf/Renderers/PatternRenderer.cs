@@ -1,173 +1,138 @@
 using SharpMod.Demo.Wpf.Themes;
 using SharpMod.Song;
 using SkiaSharp;
+using System;
 
 namespace SharpMod.Demo.Wpf.Renderers;
 
 public class PatternRenderer
 {
-    private readonly SKTypeface _typeface;
+    private static readonly string[] NoteNames =
+        { "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-" };
+
+    // Pré-alloués une seule fois
     private readonly SKPaint _bgPaint;
-    private readonly SKPaint _currentRowPaint;
+    private readonly SKPaint _activeBgPaint;
+    private readonly SKPaint _barBgPaint;
     private readonly SKPaint _rowNumPaint;
     private readonly SKPaint _notePaint;
     private readonly SKPaint _instPaint;
-    private readonly SKPaint _volPaint;
     private readonly SKPaint _fxPaint;
     private readonly SKPaint _dotPaint;
-    private readonly SKPaint _sepPaint;
-    private readonly SKPaint _headerBgPaint;
-    private readonly SKPaint _headerTextPaint;
-
-    private static readonly string[] NoteNames =
-        ["C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-"];
+    private readonly SKTypeface? _typeface;
 
     public PatternRenderer()
     {
+        _bgPaint = new SKPaint { Color = Ft2Theme.Background };
+        _activeBgPaint = new SKPaint { Color = Ft2Theme.CurrentRowBg };
+        _barBgPaint = new SKPaint { Color = new SKColor(0x40, 0x80, 0xD0, 0x18) };
+
         _typeface = Ft2Theme.LoadFont();
-        _bgPaint = new SKPaint { Color = Ft2Theme.PanelInset };
-        _currentRowPaint = new SKPaint { Color = Ft2Theme.CurrentRowBg };
         _rowNumPaint = Ft2Theme.CreateTextPaint(Ft2Theme.RowNumberColor, 11, _typeface);
         _notePaint = Ft2Theme.CreateTextPaint(Ft2Theme.NoteColor, 11, _typeface);
         _instPaint = Ft2Theme.CreateTextPaint(Ft2Theme.InstrumentColor, 11, _typeface);
-        _volPaint = Ft2Theme.CreateTextPaint(Ft2Theme.VolumeColor, 11, _typeface);
         _fxPaint = Ft2Theme.CreateTextPaint(Ft2Theme.EffectColor, 11, _typeface);
         _dotPaint = Ft2Theme.CreateTextPaint(Ft2Theme.DotColor, 11, _typeface);
-        _sepPaint = new SKPaint { Color = Ft2Theme.SeparatorColor, StrokeWidth = 1 };
-        _headerBgPaint = new SKPaint { Color = Ft2Theme.PanelBg };
-        _headerTextPaint = Ft2Theme.CreateTextPaint(Ft2Theme.TitleColor, 10, _typeface);
     }
 
-    public void Draw(SKCanvas canvas, SKSize size, SongModule? module,
-        int currentRow, int patternIndex)
+    public void Draw(SKCanvas canvas, SKImageInfo info,
+                     Pattern? pattern, int channelCount,
+                     int currentRow, float scrollOffset)
     {
-        canvas.Clear(Ft2Theme.PanelInset);
+        int w = info.Width, h = info.Height;
+        canvas.Clear(Ft2Theme.Background);
 
-        if (module == null) return;
-        if (patternIndex < 0 || patternIndex >= module.Patterns.Count) return;
+        if (pattern == null || channelCount <= 0) return;
 
-        var pattern = module.Patterns[patternIndex];
-        int channels = module.ChannelsCount;
+        int rowCount = pattern.RowsCount;
         float rowH = Ft2Theme.RowHeight;
+        float rowNumW = Ft2Theme.RowNumWidth;
         float cellW = Ft2Theme.CellWidth;
-        float headerH = 18f;
 
-        // ── Channel headers ──
-        canvas.DrawRect(0, 0, size.Width, headerH, _headerBgPaint);
-        for (int ch = 0; ch < channels; ch++)
+        int visibleRows = (int)(h / rowH) + 2;
+        int centerRow = (int)(h / rowH) / 2;
+
+        for (int i = -centerRow - 1; i <= visibleRows - centerRow; i++)
         {
-            float hx = Ft2Theme.RowNumWidth + ch * cellW;
-            canvas.DrawText($"CH {(ch + 1):D2}", hx + 4, headerH - 4, _headerTextPaint);
-            canvas.DrawLine(hx, 0, hx, headerH, _sepPaint);
-        }
+            int row = currentRow + i;
+            if (row < 0 || row >= rowCount) continue;
 
-        // ── Pattern rows ──
-        float contentH = size.Height - headerH;
-        int visibleRows = (int)(contentH / rowH) + 2;
-        int halfVisible = visibleRows / 2;
-        int startRow = currentRow - halfVisible;
+            float y = (centerRow + i) * rowH - scrollOffset * rowH;
+            if (y < -rowH || y > h + rowH) continue;
 
-        for (int vi = 0; vi < visibleRows; vi++)
-        {
-            int row = startRow + vi;
-            float y = headerH + vi * rowH;
-
-            if (y + rowH < headerH) continue;
-            if (y > size.Height) break;
-
+            // Highlights
             if (row == currentRow)
-                canvas.DrawRect(0, y, size.Width, rowH, _currentRowPaint);
+                canvas.DrawRect(0, y, w, rowH, _activeBgPaint);
+            else if (row % 4 == 0)
+                canvas.DrawRect(0, y, w, rowH, _barBgPaint);
 
-            bool inRange = row >= 0 && row < pattern.RowsCount;
+            float textY = y + rowH - 3;
 
-            if (inRange)
-                canvas.DrawText(row.ToString("X2"), 4, y + rowH - 3, _rowNumPaint);
+            // Row number
+            canvas.DrawText($"{row:X2}", 4, textY, _rowNumPaint);
 
-            float x = Ft2Theme.RowNumWidth;
-            for (int ch = 0; ch < channels; ch++)
+            // Cells
+            for (int c = 0; c < channelCount; c++)
             {
-                canvas.DrawLine(x, y, x, y + rowH, _sepPaint);
-
-                if (inRange && ch < pattern.Tracks.Count)
-                {
-                    var track = pattern.Tracks[ch];
-                    if (row < track.Cells.Count)
-                        DrawCell(canvas, x, y + rowH - 3, track.Cells[row]);
-                    else
-                        DrawEmptyCell(canvas, x, y + rowH - 3);
-                }
-                else
-                {
-                    DrawEmptyCell(canvas, x, y + rowH - 3);
-                }
-
-                x += cellW;
+                float x = rowNumW + c * cellW;
+                DrawCell(canvas, pattern, row, c, x, textY);
             }
         }
     }
 
-    private void DrawCell(SKCanvas canvas, float x, float textY, PatternCell cell)
+    private void DrawCell(SKCanvas canvas, Pattern pattern,
+                          int row, int channel, float x, float textY)
     {
-        float cx = x + 2;
-
-        // ── Note (int?) ──
-        int note = cell.Note ?? 0;
-        int octave = cell.Octave ?? 0;
-        if (note > 0 && note <= 12)
+        if (channel >= pattern.Tracks.Count)
         {
-            string noteStr = $"{NoteNames[note - 1]}{octave}";
-            canvas.DrawText(noteStr, cx, textY, _notePaint);
+            canvas.DrawText("··· ·· ···", x, textY, _dotPaint);
+            return;
+        }
+        var track = pattern.Tracks[channel];
+        if (track?.Cells == null || row >= track.Cells.Count)
+        {
+            canvas.DrawText("··· ·· ···", x, textY, _dotPaint);
+            return;
+        }
+        var pc = track.Cells[row];
+        if (pc == null)
+        {
+            canvas.DrawText("··· ·· ···", x, textY, _dotPaint);
+            return;
+        }
+
+        float cx = x;
+
+        // Note
+        bool hasNote = pc.Note.HasValue && pc.Note.Value >= 0 && pc.Note.Value < 12;
+        if (hasNote)
+        {
+            string oct = pc.Octave.HasValue ? (pc.Octave.Value + 1).ToString() : "-";
+            canvas.DrawText($"{NoteNames[pc.Note.Value]}{oct}", cx, textY, _notePaint);
         }
         else
-        {
             canvas.DrawText("···", cx, textY, _dotPaint);
-        }
-        cx += Ft2Theme.CellNoteWidth;
 
-        // ── Instrument (int?) ──
-        int inst = cell.Instrument;
-        if (inst > 0)
+        cx += Ft2Theme.CellNoteWidth + Ft2Theme.CellSepWidth;
+
+        // Instrument
+        if (pc.Instrument != 0)
+            canvas.DrawText(pc.Instrument.ToString("X2"), cx, textY, _instPaint);
+        else
+            canvas.DrawText("··", cx, textY, _dotPaint);
+
+        cx += Ft2Theme.CellInstWidth + Ft2Theme.CellSepWidth;
+
+        // Volume
+        canvas.DrawText("··", cx, textY, _dotPaint);
+        cx += Ft2Theme.CellVolWidth + Ft2Theme.CellSepWidth;
+
+        // Effect
+        if (pc.Effect != 0 || pc.EffectData != 0)
         {
-            canvas.DrawText(inst.ToString("D2"), cx, textY, _instPaint);
+            canvas.DrawText($"{pc.Effect:X1}{pc.EffectData:X2}", cx, textY, _fxPaint);
         }
         else
-        {
-            canvas.DrawText("··", cx, textY, _dotPaint);
-        }
-        cx += Ft2Theme.CellInstWidth;
-
-        // ── Volume ──
-        canvas.DrawText("··", cx, textY, _dotPaint);
-        cx += Ft2Theme.CellVolWidth;
-
-        // ── Effect (int?) ──
-        int fx = cell.Effect;
-        int fxData = cell.EffectData;
-        if (fx > 0 || fxData > 0)
-        {
-            canvas.DrawText(fx.ToString("X1"), cx, textY, _fxPaint);
-            cx += Ft2Theme.CellFxWidth;
-            canvas.DrawText(fxData.ToString("X2"), cx, textY, _fxPaint);
-        }
-        else
-        {
-            canvas.DrawText("·", cx, textY, _dotPaint);
-            cx += Ft2Theme.CellFxWidth;
-            canvas.DrawText("··", cx, textY, _dotPaint);
-        }
-    }
-
-    private void DrawEmptyCell(SKCanvas canvas, float x, float textY)
-    {
-        float cx = x + 2;
-        canvas.DrawText("···", cx, textY, _dotPaint);
-        cx += Ft2Theme.CellNoteWidth;
-        canvas.DrawText("··", cx, textY, _dotPaint);
-        cx += Ft2Theme.CellInstWidth;
-        canvas.DrawText("··", cx, textY, _dotPaint);
-        cx += Ft2Theme.CellVolWidth;
-        canvas.DrawText("·", cx, textY, _dotPaint);
-        cx += Ft2Theme.CellFxWidth;
-        canvas.DrawText("··", cx, textY, _dotPaint);
+            canvas.DrawText("···", cx, textY, _dotPaint);
     }
 }
