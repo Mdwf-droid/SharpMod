@@ -2,21 +2,21 @@ using Microsoft.JSInterop;
 using SharpMod.Song;
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SharpMod.Demo.Blazor.Services;
 
 public class PlayerService : IDisposable
 {
-    private IJSRuntime _js;
-    private ModulePlayer _player;
-    private SongModule _module;
-    private WebAudioRenderer _renderer;
-    private System.Threading.Timer _positionTimer;
+    private IJSRuntime? _js;
+    private ModulePlayer? _player;
+    private SongModule? _module;
+    private WebAudioRenderer? _renderer;
+    private Timer? _positionTimer;
 
-    // ── Propriétés publiques ──
-    public string ModuleName { get; private set; }
-    public string ModuleType { get; private set; }
+    public string? ModuleName { get; private set; }
+    public string? ModuleType { get; private set; }
     public int ChannelCount { get; private set; }
     public int Speed { get; private set; }
     public int BPM { get; private set; } = 125;
@@ -27,20 +27,17 @@ public class PlayerService : IDisposable
     public int PatternNumber { get; private set; }
     public int PatternPosition { get; private set; }
 
-    public SongModule CurrentModule => _module;
-    public ModulePlayer CurrentPlayer => _player;
+    public SongModule? CurrentModule => _module;
+    public ModulePlayer? CurrentPlayer => _player;
 
-    // ── Events ──
-    public event Action OnStateChanged;
-    public event Action<int, int> OnPatternChanged;
+    public event Action? OnStateChanged;
+    public event Action<int, int>? OnPatternChanged;
 
-    // ── Init ──
     public async Task InitializeAsync(IJSRuntime js)
     {
         _js = js;
     }
 
-    // ── Load ──
     public async Task LoadModuleAsync(byte[] fileData, string fileName)
     {
         try
@@ -59,7 +56,7 @@ public class PlayerService : IDisposable
             }
 
             _player = new ModulePlayer(_module);
-            _renderer = new WebAudioRenderer(_js);
+            _renderer = new WebAudioRenderer(_js!);
             _player.RegisterRenderer(_renderer);
 
             ModuleName = _module.SongName;
@@ -82,26 +79,24 @@ public class PlayerService : IDisposable
         }
     }
 
-    // ── Play ──
     public async Task PlayAsync()
     {
         if (_player == null) return;
 
-        try { await _js.InvokeVoidAsync("SharpModAudio.initialize"); }
+        try { await _js!.InvokeVoidAsync("SharpModAudio.initialize"); }
         catch { }
 
         _player.Start();
         IsPlaying = true;
         StatusMessage = "Playing...";
 
-        // Démarrer le timer de polling des positions (~12fps)
-        _positionTimer = new System.Threading.Timer(
+        // Timer ~12fps pour poll les positions retardées
+        _positionTimer = new Timer(
             PollPositions, null, 0, 80);
 
         NotifyStateChanged();
     }
 
-    // ── Stop ──
     public async Task StopAsync()
     {
         _positionTimer?.Dispose();
@@ -116,13 +111,12 @@ public class PlayerService : IDisposable
         PatternPosition = 0;
         StatusMessage = "Stopped";
 
-        try { await _js.InvokeVoidAsync("SharpModAudio.stop"); }
+        try { await _js!.InvokeVoidAsync("SharpModAudio.stop"); }
         catch { }
 
         NotifyStateChanged();
     }
 
-    // ── Pause ──
     public async Task PauseAsync()
     {
         if (_player == null) return;
@@ -130,38 +124,71 @@ public class PlayerService : IDisposable
         _player.Pause();
         IsPlaying = !IsPlaying;
 
-        try { await _js.InvokeVoidAsync("SharpModAudio.pause"); }
+        try { await _js!.InvokeVoidAsync("SharpModAudio.pause"); }
         catch { }
 
         StatusMessage = IsPlaying ? "Playing..." : "Paused";
         NotifyStateChanged();
     }
 
-    // ── Timer : poll les positions depuis le renderer (C# pur, zéro interop) ──
-    private void PollPositions(object state)
+    // ★ Poll les positions RETARDÉES depuis le ring buffer JS
+    private async void PollPositions(object? state)
     {
-        if (_renderer == null || !IsPlaying) return;
+        if (_renderer == null || !IsPlaying || _js == null) return;
 
-        var songPos = _renderer.SongPosition;
-        var patNum = _renderer.PatternNumber;
-        var patPos = _renderer.PatternPosition;
+        try
+        {
+            // ★ Lire les positions compensées depuis le JS
+            var positions = await _js.InvokeAsync<int[]>(
+                "SharpModAudio.getDisplayPositions");
 
-        bool changed = songPos != SongPosition
-                    || patNum != PatternNumber
-                    || patPos != PatternPosition;
+            if (positions == null || positions.Length < 3) return;
 
-        if (!changed) return;
+            int songPos = positions[0];
+            int patNum = positions[1];
+            int patPos = positions[2];
 
-        bool patternChanged = patNum != PatternNumber;
+            bool changed = songPos != SongPosition
+                        || patNum != PatternNumber
+                        || patPos != PatternPosition;
 
-        SongPosition = songPos;
-        PatternNumber = patNum;
-        PatternPosition = patPos;
+            if (!changed) return;
 
-        if (patternChanged)
-            OnPatternChanged?.Invoke(songPos, patNum);
+            bool patternChanged = patNum != PatternNumber;
 
-        NotifyStateChanged();
+            SongPosition = songPos;
+            PatternNumber = patNum;
+            PatternPosition = patPos;
+
+            if (patternChanged)
+                OnPatternChanged?.Invoke(songPos, patNum);
+
+            NotifyStateChanged();
+        }
+        catch
+        {
+            // Fallback : utiliser les positions brutes du renderer
+            var songPos = _renderer.SongPosition;
+            var patNum = _renderer.PatternNumber;
+            var patPos = _renderer.PatternPosition;
+
+            bool changed = songPos != SongPosition
+                        || patNum != PatternNumber
+                        || patPos != PatternPosition;
+
+            if (!changed) return;
+
+            bool patternChanged = patNum != PatternNumber;
+
+            SongPosition = songPos;
+            PatternNumber = patNum;
+            PatternPosition = patPos;
+
+            if (patternChanged)
+                OnPatternChanged?.Invoke(songPos, patNum);
+
+            NotifyStateChanged();
+        }
     }
 
     private void NotifyStateChanged() => OnStateChanged?.Invoke();

@@ -1,9 +1,10 @@
-<Application x:Class="SharpMod.Demo.Wpf.App"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             StartupUri="Views/MainWindow.xaml">
+<Application
+    x:Class="SharpMod.Demo.Wpf.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    StartupUri="Views/MainWindow.xaml">
     <Application.Resources>
-        <!-- Font Share Tech Mono (embarquée dans Assets/) -->
+        <!--  Font Share Tech Mono (embarquée dans Assets/)  -->
         <FontFamily x:Key="Ft2Font">pack://application:,,,/Assets/#Share Tech Mono</FontFamily>
     </Application.Resources>
 </Application>

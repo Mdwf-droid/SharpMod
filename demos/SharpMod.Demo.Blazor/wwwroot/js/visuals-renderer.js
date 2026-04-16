@@ -1,13 +1,9 @@
 ﻿// ═══════════════════════════════════════════════════════════════
-// SharpMod v18 — Visuals engine (RAF)
-// Lit les données depuis window.SharpModAudio (positions, VU, scopes)
-// Dessine FFT, oscillos, VU-meters, pattern scroll
-// ZÉRO appel interop Blazor
+// SharpMod v19 — Visuals engine (RAF + latency-compensated positions)
 // ═══════════════════════════════════════════════════════════════
 
 var _ft2AnimId = null;
 var _ft2ActiveRowEl = null;
-var _ft2ScrollRow = 0;
 
 var _ft2VuPeaksSmooth = null;
 var _ft2ScopeSmooth = null;
@@ -25,6 +21,9 @@ var _ft2ScopeH = 0;
 var _ft2PatternGrid = null;
 var _ft2RowHeight = 14;
 var _ft2TotalRows = 64;
+
+// ★ Track du dernier pattern affiché (pour détecter les changements)
+var _ft2LastDisplayPatNum = -1;
 
 // ═══════════════════
 // API publiques
@@ -60,12 +59,16 @@ window.ft2StartAll = function (fftCanvasId, scopeCanvasId, patternGridId,
     _ft2PatternGrid = document.getElementById(patternGridId);
     _ft2RowHeight = rowHeight || 14;
     _ft2TotalRows = totalRows || 64;
-    _ft2ScrollRow = 0;
+    _ft2LastDisplayPatNum = -1;
 
     if (_ft2AnimId) cancelAnimationFrame(_ft2AnimId);
 
     function mainLoop() {
         _ft2AnimId = requestAnimationFrame(mainLoop);
+
+        // ★ Mettre à jour les positions retardées AVANT de dessiner
+        window.SharpModAudio.updateDisplayPositions();
+
         _drawFFT();
         _drawScopes();
         _updatePattern();
@@ -82,6 +85,7 @@ window.ft2StopAll = function () {
         _ft2ActiveRowEl.classList.remove('active');
         _ft2ActiveRowEl = null;
     }
+    _ft2LastDisplayPatNum = -1;
 };
 
 window.ft2UpdatePatternGrid = function (patternGridId, totalRows) {
@@ -157,7 +161,7 @@ function _drawScopes() {
     var h = _ft2ScopeH;
     var count = audio.channelCount;
 
-    // ── Positions des cellules (alignement avec le pattern grid) ──
+    // Positions des cellules (alignement avec le pattern grid)
     var cellPositions = null;
     var scopeCanvas = document.getElementById('scopesCanvas');
     var patternGrid = document.getElementById('patternGrid');
@@ -194,7 +198,7 @@ function _drawScopes() {
     var ampH = halfH * 0.8;
     var segH = ((h - 2) / 8) | 0;
 
-    // ── Init smooth buffers ──
+    // Init smooth buffers
     if (!_ft2VuPeaksSmooth || _ft2VuPeaksSmooth.length !== count) {
         _ft2VuPeaksSmooth = new Float64Array(count);
     }
@@ -205,25 +209,23 @@ function _drawScopes() {
         }
     }
 
-    // ── Smooth scope data ──
+    // ★ Smooth scope data — utilise le VU pour détecter le silence
     for (var ch = 0; ch < count; ch++) {
         var src = audio.scopeData[ch];
         var dst = _ft2ScopeSmooth[ch];
+        var vu = audio.vuLevels ? audio.vuLevels[ch] : 0;
         if (!src || !dst) continue;
 
-        var maxAbs = 0;
-        for (var i = 0; i < src.length; i++) {
-            var a = src[i]; if (a < 0) a = -a;
-            if (a > maxAbs) maxAbs = a;
-        }
-
-        if (maxAbs > 0.001) {
-            for (var i = 0; i < src.length; i++) dst[i] = src[i];
+        if (vu > 0.01) {
+            // Canal actif → copie directe
+            for (var i = 0; i < src.length && i < dst.length; i++) dst[i] = src[i];
         } else {
+            // Canal silencieux → decay rapide vers zéro
             var allZero = true;
             for (var i = 0; i < dst.length; i++) {
-                dst[i] *= 0.85;
-                if (dst[i] > 0.001 || dst[i] < -0.001) allZero = false;
+                dst[i] *= 0.7;
+                if (dst[i] > 0.003 || dst[i] < -0.003) allZero = false;
+                else dst[i] = 0;
             }
             if (allZero) {
                 for (var i = 0; i < dst.length; i++) dst[i] = 0;
@@ -231,24 +233,22 @@ function _drawScopes() {
         }
     }
 
-    // ── Smooth VU peaks ──
+    // Smooth VU peaks
     for (var ch = 0; ch < count; ch++) {
         var raw = audio.vuLevels ? audio.vuLevels[ch] : 0;
         if (raw > _ft2VuPeaksSmooth[ch]) {
-            // Montée rapide (quasi instantanée)
             _ft2VuPeaksSmooth[ch] = raw;
         } else {
-            // Descente plus rapide : 0.88 au lieu de 0.96
-            _ft2VuPeaksSmooth[ch] *= 0.88;
+            _ft2VuPeaksSmooth[ch] *= 0.96;
             if (_ft2VuPeaksSmooth[ch] < 0.01) _ft2VuPeaksSmooth[ch] = 0;
         }
     }
 
-    // ── Background ──
+    // Background
     ctx.fillStyle = '#0B0E14';
     ctx.fillRect(0, 0, w, h);
 
-    // ── Bordures entre canaux ──
+    // Bordures entre canaux
     ctx.strokeStyle = '#1A1F2E';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -259,7 +259,7 @@ function _drawScopes() {
     }
     ctx.stroke();
 
-    // ── Lignes centrales ──
+    // Lignes centrales
     ctx.strokeStyle = 'rgba(48, 64, 96, 0.3)';
     ctx.lineWidth = 0.5;
     ctx.beginPath();
@@ -272,7 +272,7 @@ function _drawScopes() {
     }
     ctx.stroke();
 
-    // ── Waveforms ──
+    // Waveforms
     var scopeColors = ['#40B040', '#40A0D0', '#D0A040', '#D04080',
         '#8040D0', '#40D0A0', '#D06040', '#4080D0',
         '#40B040', '#40A0D0', '#D0A040', '#D04080',
@@ -300,7 +300,7 @@ function _drawScopes() {
         ctx.stroke();
     }
 
-    // ── VU-meters ──
+    // VU-meters
     var vuColors = ['#40C040', '#C0C040', '#C04040'];
     var vuRanges = [[0, 4], [4, 6], [6, 8]];
 
@@ -321,7 +321,7 @@ function _drawScopes() {
         }
     }
 
-    // ── VU off segments ──
+    // VU off segments
     ctx.fillStyle = '#0E1218';
     for (var ch = 0; ch < count; ch++) {
         var peak = _ft2VuPeaksSmooth[ch];
@@ -337,15 +337,24 @@ function _drawScopes() {
 }
 
 // ═══════════════════
-// Pattern scroll
+// ★ Pattern scroll — SNAP DIRECT (zéro smooth, zéro tremblement)
 // ═══════════════════
 
 function _updatePattern() {
     if (!_ft2PatternGrid) return;
 
     var audio = window.SharpModAudio;
-    var row = audio.patternPosition;
 
+    // ★ Utiliser les positions RETARDÉES au lieu des positions brutes
+    var row = audio.displayPatternPosition;
+    var patNum = audio.displayPatternNumber;
+
+    // ★ Détecter changement de pattern
+    if (patNum !== _ft2LastDisplayPatNum) {
+        _ft2LastDisplayPatNum = patNum;
+    }
+
+    // ── Highlight row active ──
     if (_ft2ActiveRowEl) {
         _ft2ActiveRowEl.classList.remove('active');
     }
@@ -355,13 +364,11 @@ function _updatePattern() {
         _ft2ActiveRowEl = el;
     }
 
-    var diff = row - _ft2ScrollRow;
-    if (Math.abs(diff) < 0.5) _ft2ScrollRow = row;
-    else _ft2ScrollRow += diff * 0.3;
-
+    // ── Scroll : snap direct, zéro smooth ──
     var gridH = _ft2PatternGrid.clientHeight;
     var center = ((gridH / _ft2RowHeight) | 0) >> 1;
-    var scroll = (_ft2ScrollRow - center) * _ft2RowHeight;
+    var targetScroll = Math.round((row - center) * _ft2RowHeight);
+
     _ft2PatternGrid.scrollTop = Math.max(0,
-        Math.min(scroll, _ft2TotalRows * _ft2RowHeight - gridH));
+        Math.min(targetScroll, _ft2TotalRows * _ft2RowHeight - gridH));
 }

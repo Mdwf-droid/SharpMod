@@ -1,6 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// SharpMod v18 — Audio engine (AudioWorklet + postMessage)
-// Pas de graphique ici — voir visuals-renderer.js
+// SharpMod v19 — Audio engine (AudioWorklet + latency compensation)
 // ═══════════════════════════════════════════════════════════════
 
 window.SharpModAudio = {
@@ -10,19 +9,35 @@ window.SharpModAudio = {
     dotnetRef: null,
     isPlaying: false,
     sampleRate: 44100,
-    bufferSize: 2048,      // taille d'un chunk FillBuffer
+    bufferSize: 2048,
     fftData: null,
     _feedInterval: null,
     _fifoLevel: 0,
 
-    // Données partagées avec visuals-renderer.js (lecture seule côté visuals)
+    // ── Positions BRUTES (en avance sur l'audio) ──
     songPosition: 0,
     patternNumber: 0,
     patternPosition: 0,
+
+    // ── ★ Positions RETARDÉES (synchronisées avec l'audio entendu) ──
+    displaySongPosition: 0,
+    displayPatternNumber: 0,
+    displayPatternPosition: 0,
+
+    // ── ★ Ring buffer de positions horodatées ──
+    _positionRing: [],
+    _audioLatencyMs: 280,  // valeur initiale, ajustée dynamiquement
+    _smoothLatencyMs: 280,
+
+    // ── Données partagées avec visuals-renderer.js ──
     channelCount: 0,
     vuLevels: null,
     scopeData: null,
     SCOPE_SIZE: 128,
+
+    // ═══════════════════
+    // Init
+    // ═══════════════════
 
     initialize: async function () {
         if (this.audioContext) return;
@@ -31,10 +46,8 @@ window.SharpModAudio = {
             sampleRate: this.sampleRate
         });
 
-        // Charger le worklet processor
         await this.audioContext.audioWorklet.addModule('js/audio-worklet-processor.js');
 
-        // Analyser pour la FFT (utilisé par visuals-renderer.js)
         this.analyser = this.audioContext.createAnalyser();
         this.analyser.fftSize = 256;
         this.analyser.smoothingTimeConstant = 0.8;
@@ -45,6 +58,10 @@ window.SharpModAudio = {
         this.dotnetRef = dotnetRef;
     },
 
+    // ═══════════════════
+    // Playback
+    // ═══════════════════
+
     play: function () {
         if (!this.audioContext || !this.dotnetRef) return;
         if (this.audioContext.state === 'suspended') {
@@ -52,8 +69,13 @@ window.SharpModAudio = {
         }
 
         this.stop();
-
         this.isPlaying = true;
+
+        // ★ Reset ring buffer
+        this._positionRing = [];
+        this.displaySongPosition = 0;
+        this.displayPatternNumber = 0;
+        this.displayPatternPosition = 0;
 
         // Créer le worklet node
         this.workletNode = new AudioWorkletNode(
@@ -64,40 +86,47 @@ window.SharpModAudio = {
 
         var self = this;
 
-        // Recevoir le niveau de FIFO depuis le worklet
+        // Recevoir le niveau FIFO depuis le worklet
         this.workletNode.port.onmessage = function (e) {
             if (e.data.type === 'fifoLevel') {
                 self._fifoLevel = e.data.count;
+                var rawLatency = Math.round(
+                    (e.data.count * self.bufferSize / self.sampleRate) * 1000
+                );
+                // ★ Convergence lente — ne jamais sauter
+                self._smoothLatencyMs += (rawLatency - self._smoothLatencyMs) * 0.05;
             }
         };
 
-        // Dire au worklet de démarrer
+
         this.workletNode.port.postMessage({ type: 'start' });
 
         // Connecter : worklet → analyser → speakers
         this.workletNode.connect(this.analyser);
         this.analyser.connect(this.audioContext.destination);
 
-        // ── Pré-remplir la FIFO (6 chunks d'avance) ──
+        // Pré-remplir la FIFO
         for (var i = 0; i < 6; i++) {
             this._produceChunk();
         }
 
-        // ── Feed loop : setInterval (pas throttlé comme RAF) ──
-        // Produit des chunks à ~60fps pour garder la FIFO pleine
-        // setInterval dans un Worker serait encore mieux, mais
-        // on a besoin de l'interop Blazor sur le main thread
+        // Feed loop
         this._feedInterval = setInterval(function () {
             if (!self.isPlaying) return;
-            // Toujours produire au moins 1 chunk (pour les visuels)
-            // + jusqu'à 2 de plus si la FIFO est basse
-            self._produceChunk();
-            if (self._fifoLevel < 6) self._produceChunk();
-            if (self._fifoLevel < 4) self._produceChunk();
-        }, 15); // ~66fps
+
+            var produced = 0;
+            while (self._fifoLevel < 8 && produced < 3) {
+                self._produceChunk();
+                produced++;
+                self._fifoLevel++;
+            }
+        }, 15);
     },
 
-    // Produire un chunk : FillBuffer (C# interop) → décode → postMessage au worklet
+    // ═══════════════════
+    // ★ Produce chunk + ring buffer
+    // ═══════════════════
+
     _produceChunk: function () {
         if (!this.dotnetRef || !this.workletNode) return;
 
@@ -108,12 +137,32 @@ window.SharpModAudio = {
 
         var view = new DataView(new Uint8Array(rawBytes).buffer);
 
-        // ── Décoder le header (pour les visuels) ──
-        this.songPosition = view.getInt32(0, true);
-        this.patternNumber = view.getInt32(4, true);
-        this.patternPosition = view.getInt32(8, true);
+        // Décoder le header
+        var songPos = view.getInt32(0, true);
+        var patNum = view.getInt32(4, true);
+        var patPos = view.getInt32(8, true);
         var chCount = view.getInt32(12, true);
 
+        // Stocker les positions brutes (pour compatibilité)
+        this.songPosition = songPos;
+        this.patternNumber = patNum;
+        this.patternPosition = patPos;
+
+        // ★ Stocker dans le ring buffer avec timestamp
+        this._positionRing.push({
+            time: performance.now(),
+            songPosition: songPos,
+            patternNumber: patNum,
+            patternPosition: patPos
+        });
+
+        // Nettoyer les entrées trop vieilles (> 2s)
+        var cutoff = performance.now() - 2000;
+        while (this._positionRing.length > 0 && this._positionRing[0].time < cutoff) {
+            this._positionRing.shift();
+        }
+
+        // Channels
         if (chCount !== this.channelCount) {
             this.channelCount = chCount;
             this.vuLevels = new Float64Array(chCount);
@@ -142,7 +191,7 @@ window.SharpModAudio = {
             }
         }
 
-        // ── Décoder le PCM en Float32 ──
+        // PCM → Float32
         var bufSize = this.bufferSize;
         var left = new Float32Array(bufSize);
         var right = new Float32Array(bufSize);
@@ -155,12 +204,62 @@ window.SharpModAudio = {
             }
         }
 
-        // ── Envoyer au worklet via Transferable (zero-copy) ──
+        // Envoyer au worklet (zero-copy)
         this.workletNode.port.postMessage(
             { type: 'audio', left: left, right: right },
             [left.buffer, right.buffer]
         );
     },
+
+    // ═══════════════════
+    // ★ Positions retardées
+    // ═══════════════════
+    
+    updateDisplayPositions: function () {
+        var now = performance.now();
+        var targetTime = now - this._smoothLatencyMs;
+
+        var best = null;
+        for (var i = this._positionRing.length - 1; i >= 0; i--) {
+            if (this._positionRing[i].time <= targetTime) {
+                best = this._positionRing[i];
+                break;
+            }
+        }
+
+        if (!best) return;
+
+        var oldPat = this.displayPatternNumber;
+        var oldRow = this.displayPatternPosition;
+
+        if (best.patternNumber === oldPat) {
+            // Même pattern : la row ne peut qu'avancer de 1 max par frame
+            if (best.patternPosition > oldRow) {
+                this.displayPatternPosition = oldRow + 1;
+            }
+            // Si best.patternPosition <= oldRow → on ne bouge pas (anti-yoyo)
+        } else {
+            // Changement de pattern → accepter directement
+            this.displayPatternNumber = best.patternNumber;
+            this.displayPatternPosition = best.patternPosition;
+        }
+
+        this.displaySongPosition = best.songPosition;
+    },
+
+    // ★ Appelé par PlayerService.cs via JSInterop
+    getDisplayPositions: function () {
+        this.updateDisplayPositions();
+        return [
+            this.displaySongPosition,
+            this.displayPatternNumber,
+            this.displayPatternPosition
+        ];
+    },
+
+    // ═══════════════════
+    // Stop / Pause
+    // ═══════════════════
 
     stop: function () {
         this.isPlaying = false;
@@ -177,6 +276,7 @@ window.SharpModAudio = {
         }
 
         this._fifoLevel = 0;
+        this._positionRing = [];
     },
 
     pause: function () {

@@ -1,50 +1,55 @@
-<Window x:Class="SharpMod.Demo.Wpf.Views.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
-        Title="SharpMod — Tracker Player"
-        Width="1200" Height="800" MinWidth="800" MinHeight="500"
-        Background="#0B0E14"
-        AllowDrop="True" DragOver="OnDragOver" Drop="OnDrop"
-         WindowStyle="None"
-        ResizeMode="CanResizeWithGrip">
+<Window
+    x:Class="SharpMod.Demo.Wpf.Views.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
+    Title="SharpMod — Tracker Player"
+    Width="1200"
+    Height="800"
+    MinWidth="800"
+    MinHeight="500"
+    AllowDrop="True"
+    Background="#0B0E14"
+    DragOver="OnDragOver"
+    Drop="OnDrop"
+    ResizeMode="CanResizeWithGrip"
+    WindowStyle="None">
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="32"
-                      GlassFrameThickness="0"
-                      ResizeBorderThickness="6"
-                      CornerRadius="0"
-                     />
+        <WindowChrome
+            CaptionHeight="32"
+            CornerRadius="0"
+            GlassFrameThickness="0"
+            ResizeBorderThickness="6" />
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <!-- ★ Style boutons title bar -->
+        <!--  ★ Style boutons title bar  -->
         <Style x:Key="TitleBarBtn" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#607090"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontFamily" Value="Consolas"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Width" Value="46"/>
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#607090" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Width" Value="46" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
+                        <Border
+                            x:Name="Bd"
+                            Padding="{TemplateBinding Padding}"
+                            Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd"
-                                        Property="Background" Value="#1A2540"/>
-                                <Setter Property="Foreground" Value="#D0D8E8"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#1A2540" />
+                                <Setter Property="Foreground" Value="#D0D8E8" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd"
-                                        Property="Background" Value="#0F1828"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#0F1828" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -52,26 +57,27 @@
             </Setter>
         </Style>
 
-        <!-- ★ Style bouton Close (rouge au hover) -->
-        <Style x:Key="TitleBarCloseBtn" TargetType="Button"
-               BasedOn="{StaticResource TitleBarBtn}">
+        <!--  ★ Style bouton Close (rouge au hover)  -->
+        <Style
+            x:Key="TitleBarCloseBtn"
+            BasedOn="{StaticResource TitleBarBtn}"
+            TargetType="Button">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="Transparent"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
+                        <Border
+                            x:Name="Bd"
+                            Padding="{TemplateBinding Padding}"
+                            Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd"
-                                        Property="Background" Value="#C04040"/>
-                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#C04040" />
+                                <Setter Property="Foreground" Value="#FFFFFF" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd"
-                                        Property="Background" Value="#902020"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#902020" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -80,36 +86,34 @@
         </Style>
 
         <Style x:Key="Ft2Btn" TargetType="Button">
-            <Setter Property="Background" Value="#1A2540"/>
-            <Setter Property="Foreground" Value="#8090B0"/>
-            <Setter Property="BorderBrush" Value="#2A3550"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="FontFamily" Value="Consolas"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="6,2"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Height" Value="26"/>
+            <Setter Property="Background" Value="#1A2540" />
+            <Setter Property="Foreground" Value="#8090B0" />
+            <Setter Property="BorderBrush" Value="#2A3550" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Padding" Value="6,2" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Height" Value="26" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="2"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
+                        <Border
+                            x:Name="Bd"
+                            Padding="{TemplateBinding Padding}"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="2">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd"
-                                        Property="Background" Value="#253050"/>
-                                <Setter Property="Foreground" Value="#D0D8E8"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#253050" />
+                                <Setter Property="Foreground" Value="#D0D8E8" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd"
-                                        Property="Background" Value="#0F1828"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#0F1828" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -117,18 +121,20 @@
             </Setter>
         </Style>
 
-        <!-- ★ Style scrollbar H — Template complet FT2 -->
+        <!--  ★ Style scrollbar H — Template complet FT2  -->
         <Style x:Key="Ft2HScrollBar" TargetType="ScrollBar">
-            <Setter Property="Background" Value="#0B0E14"/>
-            <Setter Property="Height" Value="14"/>
+            <Setter Property="Background" Value="#0B0E14" />
+            <Setter Property="Height" Value="14" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ScrollBar">
                         <Grid Background="#0B0E14">
                             <Track x:Name="PART_Track" IsDirectionReversed="False">
                                 <Track.DecreaseRepeatButton>
-                                    <RepeatButton Command="ScrollBar.PageLeftCommand"
-                                                  Opacity="0" IsTabStop="False"/>
+                                    <RepeatButton
+                                        Command="ScrollBar.PageLeftCommand"
+                                        IsTabStop="False"
+                                        Opacity="0" />
                                 </Track.DecreaseRepeatButton>
                                 <Track.Thumb>
                                     <Thumb>
@@ -137,11 +143,12 @@
                                                 <Setter Property="Template">
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="Thumb">
-                                                            <Border Background="#2A3550"
-                                                                    CornerRadius="2"
-                                                                    Margin="0,2"
-                                                                    BorderBrush="#3A4560"
-                                                                    BorderThickness="1"/>
+                                                            <Border
+                                                                Margin="0,2"
+                                                                Background="#2A3550"
+                                                                BorderBrush="#3A4560"
+                                                                BorderThickness="1"
+                                                                CornerRadius="2" />
                                                         </ControlTemplate>
                                                     </Setter.Value>
                                                 </Setter>
@@ -150,11 +157,12 @@
                                                         <Setter Property="Template">
                                                             <Setter.Value>
                                                                 <ControlTemplate TargetType="Thumb">
-                                                                    <Border Background="#3A4560"
-                                                                            CornerRadius="2"
-                                                                            Margin="0,2"
-                                                                            BorderBrush="#506080"
-                                                                            BorderThickness="1"/>
+                                                                    <Border
+                                                                        Margin="0,2"
+                                                                        Background="#3A4560"
+                                                                        BorderBrush="#506080"
+                                                                        BorderThickness="1"
+                                                                        CornerRadius="2" />
                                                                 </ControlTemplate>
                                                             </Setter.Value>
                                                         </Setter>
@@ -163,11 +171,12 @@
                                                         <Setter Property="Template">
                                                             <Setter.Value>
                                                                 <ControlTemplate TargetType="Thumb">
-                                                                    <Border Background="#506080"
-                                                                            CornerRadius="2"
-                                                                            Margin="0,2"
-                                                                            BorderBrush="#6080A0"
-                                                                            BorderThickness="1"/>
+                                                                    <Border
+                                                                        Margin="0,2"
+                                                                        Background="#506080"
+                                                                        BorderBrush="#6080A0"
+                                                                        BorderThickness="1"
+                                                                        CornerRadius="2" />
                                                                 </ControlTemplate>
                                                             </Setter.Value>
                                                         </Setter>
@@ -178,8 +187,10 @@
                                     </Thumb>
                                 </Track.Thumb>
                                 <Track.IncreaseRepeatButton>
-                                    <RepeatButton Command="ScrollBar.PageRightCommand"
-                                                  Opacity="0" IsTabStop="False"/>
+                                    <RepeatButton
+                                        Command="ScrollBar.PageRightCommand"
+                                        IsTabStop="False"
+                                        Opacity="0" />
                                 </Track.IncreaseRepeatButton>
                             </Track>
                         </Grid>
@@ -191,145 +202,254 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="32"/>
-            <!-- R0: Custom title bar -->
-            <RowDefinition Height="36"/>
-            <!-- R1: Transport (titre module + boutons) -->
-            <RowDefinition Height="24"/>
-            <!-- R2: Info bar -->
-            <RowDefinition Height="120"/>
-            <!-- R3: Spectrum FFT -->
-            <RowDefinition Height="120"/>
-            <!-- R4: Scopes + VU -->
-            <RowDefinition Height="*"/>
-            <!-- R5: Pattern -->
-            <RowDefinition Height="14"/>
-            <!-- R6: ScrollBar H -->
-            <RowDefinition Height="22"/>
-            <!-- R7: Status -->
+            <RowDefinition Height="32" />
+            <!--  R0: Custom title bar  -->
+            <RowDefinition Height="36" />
+            <!--  R1: Transport (titre module + boutons)  -->
+            <RowDefinition Height="24" />
+            <!--  R2: Info bar  -->
+            <RowDefinition Height="120" />
+            <!--  R3: Spectrum FFT  -->
+            <RowDefinition Height="120" />
+            <!--  R4: Scopes + VU  -->
+            <RowDefinition Height="*" />
+            <!--  R5: Pattern  -->
+            <RowDefinition Height="14" />
+            <!--  R6: ScrollBar H  -->
+            <RowDefinition Height="22" />
+            <!--  R7: Status  -->
         </Grid.RowDefinitions>
 
-        <!-- ═══ Row 0 : Custom Title Bar ═══ -->
-        <Border Grid.Row="0" Background="#080A10"
-            BorderBrush="#1A1F2E" BorderThickness="0,0,0,1">
+        <!--  ═══ Row 0 : Custom Title Bar ═══  -->
+        <Border
+            Grid.Row="0"
+            Background="#080A10"
+            BorderBrush="#1A1F2E"
+            BorderThickness="0,0,0,1">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                    <Button Content="─" Style="{StaticResource TitleBarBtn}"
-                        Click="OnMinimizeClick"/>
-                    <Button x:Name="MaxRestoreBtn" Content="□"
-                        Style="{StaticResource TitleBarBtn}"
-                        Click="OnMaximizeRestoreClick"/>
-                    <Button Content="✕" Style="{StaticResource TitleBarCloseBtn}"
-                        Click="OnCloseClick"/>
+                    <Button
+                        Click="OnMinimizeClick"
+                        Content="─"
+                        Style="{StaticResource TitleBarBtn}" />
+                    <Button
+                        x:Name="MaxRestoreBtn"
+                        Click="OnMaximizeRestoreClick"
+                        Content="□"
+                        Style="{StaticResource TitleBarBtn}" />
+                    <Button
+                        Click="OnCloseClick"
+                        Content="✕"
+                        Style="{StaticResource TitleBarCloseBtn}" />
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="10,0,0,0"
-                        VerticalAlignment="Center">
-                    <TextBlock Text="♪" Foreground="#FFD040"
-                           FontSize="14" FontFamily="Consolas"
-                           Margin="0,0,6,0"/>
-                    <TextBlock Text="SharpMod" Foreground="#506080"
-                           FontSize="12" FontFamily="Consolas"/>
-                    <TextBlock Text=" — " Foreground="#2A3550"
-                           FontSize="12" FontFamily="Consolas"/>
-                    <TextBlock Text="Tracker Player" Foreground="#3A4560"
-                           FontSize="12" FontFamily="Consolas"/>
+                <StackPanel
+                    Margin="10,0,0,0"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal">
+                    <TextBlock
+                        Margin="0,0,6,0"
+                        FontFamily="Consolas"
+                        FontSize="14"
+                        Foreground="#FFD040"
+                        Text="♪" />
+                    <TextBlock
+                        FontFamily="Consolas"
+                        FontSize="12"
+                        Foreground="#506080"
+                        Text="SharpMod" />
+                    <TextBlock
+                        FontFamily="Consolas"
+                        FontSize="12"
+                        Foreground="#2A3550"
+                        Text=" — " />
+                    <TextBlock
+                        FontFamily="Consolas"
+                        FontSize="12"
+                        Foreground="#3A4560"
+                        Text="Tracker Player" />
                 </StackPanel>
             </DockPanel>
         </Border>
 
-        <!-- ═══ Row 1 : Titre module + Transport ═══ -->
-        <Border Grid.Row="1" Background="#0F1318"
-            BorderBrush="#2A3550" BorderThickness="0,0,0,1">
+        <!--  ═══ Row 1 : Titre module + Transport ═══  -->
+        <Border
+            Grid.Row="1"
+            Background="#0F1318"
+            BorderBrush="#2A3550"
+            BorderThickness="0,0,0,1">
             <DockPanel Margin="8,0">
-                <TextBlock Text="{Binding ModuleTitle}"
-                       Foreground="#D0D8E8" FontSize="13"
-                       FontFamily="Consolas"
-                       VerticalAlignment="Center"/>
-                <StackPanel DockPanel.Dock="Right"
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Right">
-                    <Button Content="📂" Command="{Binding OpenFileCommand}"
-                        Style="{StaticResource Ft2Btn}" Width="32"/>
-                    <Button Content="▶" Command="{Binding PlayCommand}"
-                        Style="{StaticResource Ft2Btn}" Width="32"
-                        Margin="4,0,0,0"/>
-                    <Button Content="■" Command="{Binding StopCommand}"
-                        Style="{StaticResource Ft2Btn}" Width="32"
-                        Margin="2,0,0,0"/>
-                    <Button Content="❚❚" Command="{Binding PauseCommand}"
-                        Style="{StaticResource Ft2Btn}" Width="32"
-                        Margin="2,0,0,0"/>
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontFamily="Consolas"
+                    FontSize="13"
+                    Foreground="#D0D8E8"
+                    Text="{Binding ModuleTitle}" />
+                <StackPanel
+                    HorizontalAlignment="Right"
+                    DockPanel.Dock="Right"
+                    Orientation="Horizontal">
+                    <Button
+                        Width="32"
+                        Command="{Binding OpenFileCommand}"
+                        Content="📂"
+                        Style="{StaticResource Ft2Btn}" />
+                    <Button
+                        Width="32"
+                        Margin="4,0,0,0"
+                        Command="{Binding PlayCommand}"
+                        Content="▶"
+                        Style="{StaticResource Ft2Btn}" />
+                    <Button
+                        Width="32"
+                        Margin="2,0,0,0"
+                        Command="{Binding StopCommand}"
+                        Content="■"
+                        Style="{StaticResource Ft2Btn}" />
+                    <Button
+                        Width="32"
+                        Margin="2,0,0,0"
+                        Command="{Binding PauseCommand}"
+                        Content="❚❚"
+                        Style="{StaticResource Ft2Btn}" />
                 </StackPanel>
             </DockPanel>
         </Border>
 
-        <!-- ═══ Row 2 : Info bar ═══ -->
-        <Border Grid.Row="2" Background="#0D1018"
-            BorderBrush="#1A1F2E" BorderThickness="0,0,0,1">
-            <StackPanel Orientation="Horizontal" Margin="8,0"
-                    VerticalAlignment="Center">
-                <TextBlock Foreground="#506080" Text="Chn " FontFamily="Consolas" FontSize="11"/>
-                <TextBlock Foreground="#D0D8E8" Text="{Binding ChannelCount}"
-                       FontFamily="Consolas" FontSize="11" Margin="0,0,12,0"/>
-                <TextBlock Foreground="#506080" Text="BPM " FontFamily="Consolas" FontSize="11"/>
-                <TextBlock Foreground="#D0D8E8" Text="{Binding Bpm}"
-                       FontFamily="Consolas" FontSize="11" Margin="0,0,12,0"/>
-                <TextBlock Foreground="#506080" Text="Spd " FontFamily="Consolas" FontSize="11"/>
-                <TextBlock Foreground="#D0D8E8" Text="{Binding Speed}"
-                       FontFamily="Consolas" FontSize="11" Margin="0,0,12,0"/>
-                <TextBlock Foreground="#506080" Text="Pos " FontFamily="Consolas" FontSize="11"/>
-                <TextBlock Foreground="#FFD040" Text="{Binding SongPositionDisplay}"
-                       FontFamily="Consolas" FontSize="11"
-                       FontWeight="Bold" Margin="0,0,8,0"/>
-                <TextBlock Foreground="#506080" Text="Pat " FontFamily="Consolas" FontSize="11"/>
-                <TextBlock Foreground="#FFD040" Text="{Binding PatternNumberDisplay}"
-                       FontFamily="Consolas" FontSize="11"
-                       FontWeight="Bold" Margin="0,0,8,0"/>
-                <TextBlock Foreground="#506080" Text="Row " FontFamily="Consolas" FontSize="11"/>
-                <TextBlock Foreground="#FFD040" Text="{Binding PatternPositionDisplay}"
-                       FontFamily="Consolas" FontSize="11"
-                       FontWeight="Bold"/>
+        <!--  ═══ Row 2 : Info bar ═══  -->
+        <Border
+            Grid.Row="2"
+            Background="#0D1018"
+            BorderBrush="#1A1F2E"
+            BorderThickness="0,0,0,1">
+            <StackPanel
+                Margin="8,0"
+                VerticalAlignment="Center"
+                Orientation="Horizontal">
+                <TextBlock
+                    FontFamily="Consolas"
+                    FontSize="11"
+                    Foreground="#506080"
+                    Text="Chn " />
+                <TextBlock
+                    Margin="0,0,12,0"
+                    FontFamily="Consolas"
+                    FontSize="11"
+                    Foreground="#D0D8E8"
+                    Text="{Binding ChannelCount}" />
+                <TextBlock
+                    FontFamily="Consolas"
+                    FontSize="11"
+                    Foreground="#506080"
+                    Text="BPM " />
+                <TextBlock
+                    Margin="0,0,12,0"
+                    FontFamily="Consolas"
+                    FontSize="11"
+                    Foreground="#D0D8E8"
+                    Text="{Binding Bpm}" />
+                <TextBlock
+                    FontFamily="Consolas"
+                    FontSize="11"
+                    Foreground="#506080"
+                    Text="Spd " />
+                <TextBlock
+                    Margin="0,0,12,0"
+                    FontFamily="Consolas"
+                    FontSize="11"
+                    Foreground="#D0D8E8"
+                    Text="{Binding Speed}" />
+                <TextBlock
+                    FontFamily="Consolas"
+                    FontSize="11"
+                    Foreground="#506080"
+                    Text="Pos " />
+                <TextBlock
+                    Margin="0,0,8,0"
+                    FontFamily="Consolas"
+                    FontSize="11"
+                    FontWeight="Bold"
+                    Foreground="#FFD040"
+                    Text="{Binding SongPositionDisplay}" />
+                <TextBlock
+                    FontFamily="Consolas"
+                    FontSize="11"
+                    Foreground="#506080"
+                    Text="Pat " />
+                <TextBlock
+                    Margin="0,0,8,0"
+                    FontFamily="Consolas"
+                    FontSize="11"
+                    FontWeight="Bold"
+                    Foreground="#FFD040"
+                    Text="{Binding PatternNumberDisplay}" />
+                <TextBlock
+                    FontFamily="Consolas"
+                    FontSize="11"
+                    Foreground="#506080"
+                    Text="Row " />
+                <TextBlock
+                    FontFamily="Consolas"
+                    FontSize="11"
+                    FontWeight="Bold"
+                    Foreground="#FFD040"
+                    Text="{Binding PatternPositionDisplay}" />
             </StackPanel>
         </Border>
 
-        <!-- ═══ Row 3 : Spectrum ═══ -->
-        <Border Grid.Row="3" Background="#0B0E14"
-            BorderBrush="#1A1F2E" BorderThickness="0,0,0,1"
-            Margin="4,2">
-            <skia:SKElement x:Name="SpectrumCanvas"
-                        PaintSurface="OnSpectrumPaint"/>
+        <!--  ═══ Row 3 : Spectrum ═══  -->
+        <Border
+            Grid.Row="3"
+            Margin="4,2"
+            Background="#0B0E14"
+            BorderBrush="#1A1F2E"
+            BorderThickness="0,0,0,1">
+            <skia:SKElement x:Name="SpectrumCanvas" PaintSurface="OnSpectrumPaint" />
         </Border>
 
-        <!-- ═══ Row 4 : Scopes + VU ═══ -->
-        <Border Grid.Row="4" Background="#0B0E14"
-            BorderBrush="#1A1F2E" BorderThickness="0,0,0,1"
-            Margin="4,0" ClipToBounds="True">
-            <skia:SKElement x:Name="ScopesCanvas"
-                        PaintSurface="OnScopesPaint"/>
+        <!--  ═══ Row 4 : Scopes + VU ═══  -->
+        <Border
+            Grid.Row="4"
+            Margin="4,0"
+            Background="#0B0E14"
+            BorderBrush="#1A1F2E"
+            BorderThickness="0,0,0,1"
+            ClipToBounds="True">
+            <skia:SKElement x:Name="ScopesCanvas" PaintSurface="OnScopesPaint" />
         </Border>
 
-        <!-- ═══ Row 5 : Pattern (headers + rows) ═══ -->
+        <!--  ═══ Row 5 : Pattern (headers + rows) ═══  -->
         <Border Grid.Row="5" ClipToBounds="True">
-            <skia:SKElement x:Name="PatternCanvas"
-                        PaintSurface="OnPatternPaint"
-                        MouseWheel="OnPatternMouseWheel"/>
+            <skia:SKElement
+                x:Name="PatternCanvas"
+                MouseWheel="OnPatternMouseWheel"
+                PaintSurface="OnPatternPaint" />
         </Border>
 
-        <!-- ═══ Row 6 : ScrollBar H ═══ -->
-        <ScrollBar x:Name="HScrollBar" Grid.Row="6"
-               Orientation="Horizontal"
-               Style="{StaticResource Ft2HScrollBar}"
-               Minimum="0" Maximum="0" Value="0"
-               ValueChanged="OnHScrollChanged"
-               Visibility="Collapsed"/>
+        <!--  ═══ Row 6 : ScrollBar H ═══  -->
+        <ScrollBar
+            x:Name="HScrollBar"
+            Grid.Row="6"
+            Maximum="0"
+            Minimum="0"
+            Orientation="Horizontal"
+            Style="{StaticResource Ft2HScrollBar}"
+            ValueChanged="OnHScrollChanged"
+            Visibility="Collapsed"
+            Value="0" />
 
-        <!-- ═══ Row 7 : Status ═══ -->
-        <Border Grid.Row="7" Background="#0D1018"
-            BorderBrush="#1A1F2E" BorderThickness="0,1,0,0">
-            <TextBlock Text="{Binding StatusMessage}"
-                   Foreground="#506080" FontFamily="Consolas"
-                   FontSize="10" Margin="8,2"
-                   VerticalAlignment="Center"/>
+        <!--  ═══ Row 7 : Status ═══  -->
+        <Border
+            Grid.Row="7"
+            Background="#0D1018"
+            BorderBrush="#1A1F2E"
+            BorderThickness="0,1,0,0">
+            <TextBlock
+                Margin="8,2"
+                VerticalAlignment="Center"
+                FontFamily="Consolas"
+                FontSize="10"
+                Foreground="#506080"
+                Text="{Binding StatusMessage}" />
         </Border>
     </Grid>
 </Window>
