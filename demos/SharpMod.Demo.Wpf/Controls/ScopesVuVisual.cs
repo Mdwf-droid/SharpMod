@@ -4,15 +4,10 @@ using System.Windows.Media;
 
 namespace SharpMod.Demo.Wpf.Controls;
 
-/// <summary>
-/// Oscilloscopes + VU-meters combinés — rendu GPU via DrawingContext.
-/// Layout identique au Blazor : waveform + VU vertical par canal.
-/// </summary>
 public class ScopesVuVisual : FrameworkElement
 {
     private const int SCOPE_SIZE = 128;
 
-    // Couleurs scope (identiques au Blazor)
     private static readonly Color[] ScopeColors =
     {
         Color.FromRgb(0x40, 0xB0, 0x40), Color.FromRgb(0x40, 0xA0, 0xD0),
@@ -25,40 +20,34 @@ public class ScopesVuVisual : FrameworkElement
     private static readonly Pen BorderPen;
     private static readonly Pen CenterPen;
     private static readonly Brush VuGreen, VuYellow, VuRed, VuOff;
-
-    // Pens scope pré-alloués par couleur
     private static readonly Pen[] ScopePens;
 
     static ScopesVuVisual()
     {
-        BgBrush = new SolidColorBrush(Color.FromRgb(0x0B, 0x0E, 0x14));
-        BgBrush.Freeze();
-        BorderPen = new Pen(new SolidColorBrush(Color.FromRgb(0x1A, 0x1F, 0x2E)), 1);
-        BorderPen.Freeze();
-        CenterPen = new Pen(new SolidColorBrush(Color.FromArgb(0x4D, 0x30, 0x40, 0x60)), 0.5);
-        CenterPen.Freeze();
-
-        VuGreen = new SolidColorBrush(Color.FromRgb(0x40, 0xC0, 0x40)); VuGreen.Freeze();
-        VuYellow = new SolidColorBrush(Color.FromRgb(0xC0, 0xC0, 0x40)); VuYellow.Freeze();
-        VuRed = new SolidColorBrush(Color.FromRgb(0xC0, 0x40, 0x40)); VuRed.Freeze();
-        VuOff = new SolidColorBrush(Color.FromRgb(0x0E, 0x12, 0x18)); VuOff.Freeze();
+        BgBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x0B, 0x0E, 0x14)));
+        BorderPen = FreezePen(new Pen(new SolidColorBrush(Color.FromRgb(0x1A, 0x1F, 0x2E)), 1));
+        CenterPen = FreezePen(new Pen(new SolidColorBrush(Color.FromArgb(0x4D, 0x30, 0x40, 0x60)), 0.5));
+        VuGreen = Freeze(new SolidColorBrush(Color.FromRgb(0x40, 0xC0, 0x40)));
+        VuYellow = Freeze(new SolidColorBrush(Color.FromRgb(0xC0, 0xC0, 0x40)));
+        VuRed = Freeze(new SolidColorBrush(Color.FromRgb(0xC0, 0x40, 0x40)));
+        VuOff = Freeze(new SolidColorBrush(Color.FromRgb(0x0E, 0x12, 0x18)));
 
         ScopePens = new Pen[ScopeColors.Length];
         for (int i = 0; i < ScopeColors.Length; i++)
-        {
-            var p = new Pen(new SolidColorBrush(ScopeColors[i]), 1);
-            p.Freeze();
-            ScopePens[i] = p;
-        }
+            ScopePens[i] = FreezePen(new Pen(new SolidColorBrush(ScopeColors[i]), 1));
     }
+
+    private static SolidColorBrush Freeze(SolidColorBrush b) { b.Freeze(); return b; }
+    private static Pen FreezePen(Pen p) { p.Freeze(); return p; }
 
     private static readonly Brush[] VuOnBrushes = { VuGreen, VuYellow, VuRed };
 
-    // Smooth buffers
     private float[]? _vuSmooth;
     private float[][]? _scopeSmooth;
 
-    // Données entrantes (mises à jour par le ViewModel)
+    // ★ Géométries pré-allouées, réutilisées chaque frame
+    private StreamGeometry[]? _scopeGeometries;
+
     public int ChannelCount { get; set; }
     public float[]? VuLevels { get; set; }
     public float[][]? ScopeData { get; set; }
@@ -73,13 +62,17 @@ public class ScopesVuVisual : FrameworkElement
         int count = ChannelCount;
         if (count <= 0 || VuLevels == null || ScopeData == null) return;
 
-        // Init smooth
+        // Init smooth buffers
         if (_vuSmooth == null || _vuSmooth.Length != count)
         {
             _vuSmooth = new float[count];
             _scopeSmooth = new float[count][];
+            _scopeGeometries = new StreamGeometry[count];
             for (int i = 0; i < count; i++)
+            {
                 _scopeSmooth[i] = new float[SCOPE_SIZE];
+                _scopeGeometries[i] = new StreamGeometry();
+            }
         }
 
         double cellW = w / count;
@@ -88,19 +81,19 @@ public class ScopesVuVisual : FrameworkElement
         double ampH = halfH * 0.8;
         int segH = Math.Max(1, (int)((h - 2) / 8));
 
-        // Smooth VU
+        // ── Smooth VU ──
         for (int ch = 0; ch < count; ch++)
         {
             float raw = ch < VuLevels.Length ? VuLevels[ch] : 0f;
             if (raw > _vuSmooth[ch]) _vuSmooth[ch] = raw;
             else
             {
-                _vuSmooth[ch] *= 0.88f;
+                _vuSmooth[ch] *= 0.96f;  // ★ était 0.88f — le Blazor utilise 0.96
                 if (_vuSmooth[ch] < 0.01f) _vuSmooth[ch] = 0;
             }
         }
 
-        // Smooth scope
+        // ── Smooth scope ──
         for (int ch = 0; ch < count; ch++)
         {
             var src = ch < ScopeData.Length ? ScopeData[ch] : null;
@@ -119,45 +112,43 @@ public class ScopesVuVisual : FrameworkElement
                 for (int i = 0; i < SCOPE_SIZE; i++) dst[i] *= 0.85f;
         }
 
-        // Borders
+        // ── Borders ──
         for (int ch = 1; ch < count; ch++)
-        {
-            double bx = ch * cellW;
-            dc.DrawLine(BorderPen, new Point(bx, 0), new Point(bx, h));
-        }
+            dc.DrawLine(BorderPen, new Point(ch * cellW, 0), new Point(ch * cellW, h));
 
-        // Center lines + waveforms
+        // ── Center lines + Waveforms ──
         for (int ch = 0; ch < count; ch++)
         {
             double x0 = ch * cellW + 1;
             double scopeW = cellW - vuW - 3;
             if (scopeW < 4) scopeW = 4;
 
-            // Center line
             dc.DrawLine(CenterPen, new Point(x0, halfH), new Point(x0 + scopeW, halfH));
 
-            // Waveform via StreamGeometry (plus rapide que PathGeometry)
             var data = _scopeSmooth![ch];
             double step = (double)SCOPE_SIZE / scopeW;
 
-            var geom = new StreamGeometry();
-            using (var ctx = geom.Open())
+            // ★ RÉUTILISER la géométrie au lieu d'en créer une nouvelle
+            var geom = _scopeGeometries![ch];
+            // StreamGeometry ne peut pas être réutilisée une fois Frozen
+            // → on doit quand même en créer une nouvelle MAIS sans Freeze
+            // Alternative : utiliser PathGeometry avec PathFigure recyclée
+            // → Plus simple : PathGeometry + segments réutilisés
+
+            // Approche la plus rapide : dessiner avec DrawLine directement
+            var pen = ScopePens[ch % ScopePens.Length];
+            double prevY = halfH - data[0] * ampH;
+            int pixelW = (int)scopeW;
+            for (int px = 1; px < pixelW; px++)
             {
-                bool started = false;
-                for (int px = 0; px < (int)scopeW; px++)
-                {
-                    int idx = Math.Min((int)(px * step), SCOPE_SIZE - 1);
-                    double y = halfH - data[idx] * ampH;
-                    var pt = new Point(x0 + px, y);
-                    if (!started) { ctx.BeginFigure(pt, false, false); started = true; }
-                    else ctx.LineTo(pt, true, false);
-                }
+                int idx = Math.Min((int)(px * step), SCOPE_SIZE - 1);
+                double y = halfH - data[idx] * ampH;
+                dc.DrawLine(pen, new Point(x0 + px - 1, prevY), new Point(x0 + px, y));
+                prevY = y;
             }
-            geom.Freeze();
-            dc.DrawGeometry(null, ScopePens[ch % ScopePens.Length], geom);
         }
 
-        // VU meters
+        // ── VU on ──
         int[][] vuRanges = { new[] { 0, 4 }, new[] { 4, 6 }, new[] { 6, 8 } };
         for (int pass = 0; pass < 3; pass++)
         {
@@ -175,7 +166,7 @@ public class ScopesVuVisual : FrameworkElement
             }
         }
 
-        // VU off
+        // ── VU off ──
         for (int ch = 0; ch < count; ch++)
         {
             int segs = Math.Min(8, (int)(_vuSmooth[ch] * 8 + 0.5f));

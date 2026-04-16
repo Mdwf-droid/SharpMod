@@ -4,17 +4,13 @@ using System.Windows.Media;
 
 namespace SharpMod.Demo.Wpf.Controls;
 
-/// <summary>
-/// Spectrum FFT — rendu GPU via DrawingContext (OnRender).
-/// Identique visuellement au Blazor (vert → jaune → rouge).
-/// </summary>
 public class SpectrumVisual : FrameworkElement
 {
     private static readonly Brush BgBrush;
     private static readonly Pen GridPen;
 
-    // Cache de brushes par bande (évite new à chaque frame)
-    private Brush[] _barBrushes = Array.Empty<Brush>();
+    // ★ Cache de 256 brushes pré-calculés (gradient vert→jaune→rouge)
+    private static readonly Brush[] GradientCache;
 
     static SpectrumVisual()
     {
@@ -22,6 +18,27 @@ public class SpectrumVisual : FrameworkElement
         BgBrush.Freeze();
         GridPen = new Pen(new SolidColorBrush(Color.FromArgb(0x20, 0x40, 0x60, 0x90)), 0.5);
         GridPen.Freeze();
+
+        // Pré-calculer 256 niveaux de couleur
+        GradientCache = new Brush[256];
+        for (int i = 0; i < 256; i++)
+        {
+            float val = i / 255f;
+            byte r, g;
+            if (val < 0.5f)
+            {
+                r = (byte)Math.Min(255, val * 384);
+                g = 192;
+            }
+            else
+            {
+                r = 192;
+                g = (byte)Math.Max(0, (1f - (val - 0.5f) * 2f) * 192);
+            }
+            var b = new SolidColorBrush(Color.FromRgb(r, g, 40));
+            b.Freeze();
+            GradientCache[i] = b;
+        }
     }
 
     public float[]? Bands { get; set; }
@@ -32,25 +49,17 @@ public class SpectrumVisual : FrameworkElement
         double w = ActualWidth, h = ActualHeight;
         if (w < 1 || h < 1) return;
 
-        // Background
         dc.DrawRectangle(BgBrush, null, new Rect(0, 0, w, h));
 
         // Grille
         for (int g = 1; g <= 4; g++)
-        {
-            double gy = h * g / 5.0;
-            dc.DrawLine(GridPen, new Point(0, gy), new Point(w, gy));
-        }
+            dc.DrawLine(GridPen, new Point(0, h * g / 5.0), new Point(w, h * g / 5.0));
 
         if (Bands == null || Bands.Length == 0 || BandCount == 0) return;
 
         int count = Math.Min(Bands.Length, BandCount);
         double barWidth = w / count;
         double gap = Math.Max(1, barWidth * 0.15);
-
-        // Init brush cache
-        if (_barBrushes.Length != count)
-            _barBrushes = new Brush[count];
 
         for (int i = 0; i < count; i++)
         {
@@ -60,25 +69,9 @@ public class SpectrumVisual : FrameworkElement
 
             double x = i * barWidth + gap * 0.5;
 
-            // Couleur identique Blazor : vert → jaune → rouge
-            byte r, g2;
-            if (val < 0.5f)
-            {
-                r = (byte)Math.Min(255, val * 384);
-                g2 = 192;
-            }
-            else
-            {
-                r = 192;
-                g2 = (byte)Math.Max(0, (1f - (val - 0.5f) * 2f) * 192);
-            }
-
-            // Réutiliser ou créer le brush
-            var brush = new SolidColorBrush(Color.FromRgb(r, g2, 40));
-            brush.Freeze();
-            _barBrushes[i] = brush;
-
-            dc.DrawRectangle(brush, null,
+            // ★ ZERO ALLOCATION : lookup dans le cache
+            int colorIdx = (int)(val * 255);
+            dc.DrawRectangle(GradientCache[colorIdx], null,
                 new Rect(x, h - barH, barWidth - gap, barH));
         }
     }

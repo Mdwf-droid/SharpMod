@@ -1,8 +1,11 @@
-﻿using Microsoft.Win32;
+﻿using SharpMod.Demo.Wpf.Renderers;
+using SharpMod.Demo.Wpf.Themes;
 using SharpMod.Demo.Wpf.ViewModels;
+using SkiaSharp;
+using SkiaSharp.Views.Desktop;
 using System;
 using System.Windows;
-using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace SharpMod.Demo.Wpf.Views;
@@ -10,8 +13,15 @@ namespace SharpMod.Demo.Wpf.Views;
 public partial class MainWindow : Window
 {
     private readonly MainViewModel _vm;
-    private int _lastPatternNumber = -1;
+    private readonly SpectrumRenderer _spectrumRenderer = new();
+    private readonly ScopesVuRenderer _scopesRenderer = new();
+    private readonly PatternRenderer _patternRenderer = new();
     private TimeSpan _lastRenderTime;
+
+    // ═══ Scroll horizontal partagé ═══
+    private float _scrollX = 0;
+    private float _totalContentWidth = 0;
+    private int _lastChannelCount = -1;
 
     public MainWindow()
     {
@@ -20,6 +30,7 @@ public partial class MainWindow : Window
         DataContext = _vm;
 
         CompositionTarget.Rendering += OnRenderFrame;
+
         Closed += (_, _) =>
         {
             CompositionTarget.Rendering -= OnRenderFrame;
@@ -27,90 +38,139 @@ public partial class MainWindow : Window
         };
     }
 
+    // ═══════════════════════════════════
+    // Custom Title Bar
+    // ═══════════════════════════════════
+
+    private void OnMinimizeClick(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void OnMaximizeRestoreClick(object sender, RoutedEventArgs e)
+    {
+        if (WindowState == WindowState.Maximized)
+        {
+            WindowState = WindowState.Normal;
+            MaxRestoreBtn.Content = "□";
+        }
+        else
+        {
+            WindowState = WindowState.Maximized;
+            MaxRestoreBtn.Content = "❐";
+        }
+    }
+
+    private void OnCloseClick(object sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+
+    // ═══════════════════════════════════
+    // Render loop
+    // ═══════════════════════════════════
+
     private void OnRenderFrame(object? sender, EventArgs e)
     {
-        if (!_vm.IsPlaying) return;
-
         var args = (RenderingEventArgs)e;
         if (args.RenderingTime == _lastRenderTime) return;
         _lastRenderTime = args.RenderingTime;
 
+        if (!_vm.IsPlaying) return;
+
         _vm.UpdateVisualizationData();
 
-        // ── Spectrum ──
-        SpectrumVis.Bands = _vm.SpectrumBands;
-        SpectrumVis.BandCount = _vm.SpectrumBandCount;
-        SpectrumVis.InvalidateVisual();
-
-        // ── Scopes + VU ──
-        ScopesVuVis.ChannelCount = _vm.ChannelCount;
-        ScopesVuVis.VuLevels = _vm.VuLevels;
-        ScopesVuVis.ScopeData = _vm.ScopeData;
-        ScopesVuVis.InvalidateVisual();
-
-        // ── Pattern ──
-        if (_vm.PatternNumber != _lastPatternNumber && _vm.CurrentModule != null)
+        // Mettre à jour la scrollbar si le nombre de canaux change
+        if (_vm.ChannelCount != _lastChannelCount)
         {
-            _lastPatternNumber = _vm.PatternNumber;
-            PatternEditor.LoadPattern(_vm.CurrentModule, _vm.PatternNumber);
+            _lastChannelCount = _vm.ChannelCount;
+            UpdateScrollBar();
         }
-        PatternEditor.UpdateActiveRow(_vm.PatternPosition);
+
+        SpectrumCanvas.InvalidateVisual();
+        ScopesCanvas.InvalidateVisual();
+        PatternCanvas.InvalidateVisual();
     }
 
-    private void BuildChannelHeaders(int count)
-    {
-        ChannelHeadersBar.Items.Clear();
-        ChannelHeadersBar.Items.Add(new Border { Width = 28 });
+    // ═══════════════════════════════════
+    // ScrollBar H
+    // ═══════════════════════════════════
 
-        for (int c = 0; c < count; c++)
+    private void UpdateScrollBar()
+    {
+        _totalContentWidth = Ft2Theme.RowNumWidth
+            + _vm.ChannelCount * Ft2Theme.CellWidth;
+
+        float visibleWidth = (float)PatternCanvas.ActualWidth;
+
+        if (_totalContentWidth <= visibleWidth)
         {
-            var tb = new TextBlock
-            {
-                Text = $"Ch {c + 1:D2}",
-                Foreground = new SolidColorBrush(Color.FromRgb(0x80, 0x90, 0xB0)),
-                FontFamily = new FontFamily("Consolas"),
-                FontSize = 11,
-                VerticalAlignment = VerticalAlignment.Center,
-                TextAlignment = TextAlignment.Center,
-                Margin = new Thickness(4, 0, 4, 0)
-            };
-            var border = new Border
-            {
-                Child = tb,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(0x2A, 0x35, 0x50)),
-                BorderThickness = new Thickness(0, 0, 1, 0),
-                MinWidth = 80
-            };
-            ChannelHeadersBar.Items.Add(border);
+            // Tout rentre → cacher la scrollbar
+            HScrollBar.Visibility = Visibility.Collapsed;
+            _scrollX = 0;
+        }
+        else
+        {
+            HScrollBar.Visibility = Visibility.Visible;
+            HScrollBar.Maximum = _totalContentWidth - visibleWidth;
+            HScrollBar.ViewportSize = visibleWidth;
+            HScrollBar.LargeChange = visibleWidth * 0.8;
+            HScrollBar.SmallChange = Ft2Theme.CellWidth;
         }
     }
 
-    private void OnPlay(object sender, RoutedEventArgs e) => _vm.Play();
-    private void OnPause(object sender, RoutedEventArgs e) => _vm.Pause();
-    private void OnStop(object sender, RoutedEventArgs e)
+    private void OnHScrollChanged(object sender,
+        RoutedPropertyChangedEventArgs<double> e)
     {
-        _vm.Stop();
-        _lastPatternNumber = -1;
+        _scrollX = (float)e.NewValue;
+        // Forcer un repaint immédiat
+        ScopesCanvas.InvalidateVisual();
+        PatternCanvas.InvalidateVisual();
     }
 
-    private void OnOpen(object sender, RoutedEventArgs e)
+    private void OnPatternMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        var dlg = new OpenFileDialog
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
         {
-            Filter = "Modules|*.mod;*.s3m;*.xm|All files|*.*",
-            Title = "Open Module"
-        };
-        if (dlg.ShowDialog() == true)
-        {
-            _vm.LoadModule(dlg.FileName);
-            _lastPatternNumber = -1;
-            if (_vm.CurrentModule != null)
-            {
-                PatternEditor.LoadPattern(_vm.CurrentModule, 0);
-                BuildChannelHeaders(_vm.ChannelCount);
-            }
+            // Shift + Wheel = scroll horizontal
+            float delta = -e.Delta * 0.5f;
+            float newVal = (float)HScrollBar.Value + delta;
+            HScrollBar.Value = Math.Clamp(newVal,
+                HScrollBar.Minimum, HScrollBar.Maximum);
+            e.Handled = true;
         }
     }
+
+    // ═══════════════════════════════════
+    // PaintSurface handlers
+    // ═══════════════════════════════════
+
+    private void OnSpectrumPaint(object? sender, SKPaintSurfaceEventArgs e)
+    {
+        _spectrumRenderer.Draw(
+            e.Surface.Canvas, e.Info.Width, e.Info.Height,
+            _vm.SpectrumBands, _vm.SpectrumBandCount);
+    }
+
+    private void OnScopesPaint(object? sender, SKPaintSurfaceEventArgs e)
+    {
+        _scopesRenderer.Draw(
+            e.Surface.Canvas, e.Info.Width, e.Info.Height,
+            _vm.ChannelCount, _vm.VuLevels, _vm.ScopeData,
+            _scrollX);  // ★ scroll X passé au renderer
+    }
+
+    private void OnPatternPaint(object? sender, SKPaintSurfaceEventArgs e)
+    {
+        _patternRenderer.Draw(
+            e.Surface.Canvas, e.Info.Width, e.Info.Height,
+            _vm.CurrentModule, _vm.PatternNumber, _vm.PatternPosition,
+            _scrollX);  // ★ scroll X passé au renderer
+    }
+
+    // ═══════════════════════════════════
+    // Drag & Drop
+    // ═══════════════════════════════════
 
     private void OnDragOver(object sender, DragEventArgs e)
     {
@@ -119,18 +179,16 @@ public partial class MainWindow : Window
         e.Handled = true;
     }
 
-    private void OnFileDrop(object sender, DragEventArgs e)
+    private void OnDrop(object sender, DragEventArgs e)
     {
-        if (e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Length > 0)
+        if (e.Data.GetData(DataFormats.FileDrop) is string[] files
+            && files.Length > 0)
         {
             _vm.LoadModule(files[0]);
-            _lastPatternNumber = -1;
-            if (_vm.CurrentModule != null)
-            {
-                PatternEditor.LoadPattern(_vm.CurrentModule, 0);
-                BuildChannelHeaders(_vm.ChannelCount);
-                _vm.Play();
-            }
+            _scrollX = 0;
+            HScrollBar.Value = 0;
+            UpdateScrollBar();
+            _vm.PlayCommand.Execute(null);
         }
     }
 }

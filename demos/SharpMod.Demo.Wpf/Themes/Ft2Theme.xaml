@@ -72,4 +72,67 @@
         <Setter Property="Foreground" Value="{StaticResource TextBrightBrush}" />
     </Style>
 
+    <!--  REMPLACER le style Ft2HScrollBar existant dans Window.Resources  -->
+    <Style x:Key="Ft2HScrollBar" TargetType="ScrollBar">
+        <Setter Property="Background" Value="#0B0E14" />
+        <Setter Property="Height" Value="14" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid Background="#0B0E14">
+                        <Track x:Name="PART_Track" IsDirectionReversed="False">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton
+                                    Command="ScrollBar.PageLeftCommand"
+                                    IsTabStop="False"
+                                    Opacity="0" />
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb>
+                                    <Thumb.Style>
+                                        <Style TargetType="Thumb">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Thumb">
+                                                        <Border
+                                                            Margin="0,2"
+                                                            Background="#2A3550"
+                                                            BorderBrush="#3A4560"
+                                                            BorderThickness="1"
+                                                            CornerRadius="2" />
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Thumb">
+                                                                <Border
+                                                                    Margin="0,2"
+                                                                    Background="#3A4560"
+                                                                    BorderBrush="#506080"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="2" />
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Thumb.Style>
+                                </Thumb>
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton
+                                    Command="ScrollBar.PageRightCommand"
+                                    IsTabStop="False"
+                                    Opacity="0" />
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

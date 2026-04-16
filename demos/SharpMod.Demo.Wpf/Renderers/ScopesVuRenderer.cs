@@ -40,11 +40,11 @@ public class ScopesVuRenderer
     private float[]? _vuSmooth;
     private float[][]? _scopeSmooth;
 
-    public void Draw(SKCanvas canvas, SKImageInfo info,
-                     int channelCount, float[] vuLevels, float[][] scopeData)
+    public void Draw(SKCanvas canvas, int width, int height,
+                     int channelCount, float[]? vuLevels, float[][]? scopeData,
+                     float scrollX = 0)
     {
-        int w = info.Width, h = info.Height;
-        canvas.DrawRect(0, 0, w, h, _bgPaint);
+        canvas.DrawRect(0, 0, width, height, _bgPaint);
 
         if (channelCount <= 0 || vuLevels == null || scopeData == null) return;
 
@@ -56,56 +56,78 @@ public class ScopesVuRenderer
                 _scopeSmooth[i] = new float[SCOPE_SIZE];
         }
 
-        float cellW = (float)w / channelCount;
+        float cellW = Ft2Theme.CellWidth;
+        float rowNumW = Ft2Theme.RowNumWidth;
         int vuW = 6;
-        float halfH = h * 0.5f;
+        float halfH = height * 0.5f;
         float ampH = halfH * 0.8f;
-        int segH = Math.Max(1, (h - 2) / 8);
+        int segH = Math.Max(1, (height - 2) / 8);
 
-        // Smooth VU (0.88 decay)
+        // ── Smooth VU ──
         for (int ch = 0; ch < channelCount; ch++)
         {
             float raw = ch < vuLevels.Length ? vuLevels[ch] : 0f;
             if (raw > _vuSmooth[ch]) _vuSmooth[ch] = raw;
             else
             {
-                _vuSmooth[ch] *= 0.88f;
+                _vuSmooth[ch] *= 0.92f;
                 if (_vuSmooth[ch] < 0.01f) _vuSmooth[ch] = 0;
             }
         }
 
-        // Smooth scope
+        // ── ★ Smooth scope — FIX : utiliser le VU pour détecter le silence ── 
         for (int ch = 0; ch < channelCount; ch++)
         {
             var src = ch < scopeData.Length ? scopeData[ch] : null;
             var dst = _scopeSmooth![ch];
-            if (src == null) continue;
+            float vu = ch < vuLevels.Length ? vuLevels[ch] : 0f;
 
-            float maxAbs = 0;
-            for (int i = 0; i < SCOPE_SIZE && i < src.Length; i++)
+            if (src != null && vu > 0.01f)
             {
-                float a = Math.Abs(src[i]);
-                if (a > maxAbs) maxAbs = a;
-            }
-            if (maxAbs > 0.001f)
+                // Canal actif (VU > seuil) → copie directe
                 Array.Copy(src, dst, Math.Min(src.Length, SCOPE_SIZE));
+            }
             else
-                for (int i = 0; i < SCOPE_SIZE; i++) dst[i] *= 0.85f;
+            {
+                // Canal silencieux → decay rapide vers zéro
+                bool allDead = true;
+                for (int i = 0; i < SCOPE_SIZE; i++)
+                {
+                    dst[i] *= 0.7f;
+                    if (Math.Abs(dst[i]) < 0.003f)
+                        dst[i] = 0f;
+                    else
+                        allDead = false;
+                }
+                if (allDead)
+                    Array.Clear(dst, 0, SCOPE_SIZE);
+            }
         }
 
-        // Borders
-        for (int ch = 1; ch < channelCount; ch++)
-            canvas.DrawLine(ch * cellW, 0, ch * cellW, h, _borderPaint);
+        // Clip au canvas
+        canvas.Save();
+        canvas.ClipRect(SKRect.Create(0, 0, width, height));
 
-        // Center lines + Waveforms
+        // ── Draw channels ──
         for (int ch = 0; ch < channelCount; ch++)
         {
-            float x0 = ch * cellW + 1;
+            float cellX = rowNumW + ch * cellW - scrollX;
+
+            // Skip si hors écran
+            if (cellX + cellW < 0 || cellX > width) continue;
+
             float scopeW = cellW - vuW - 3;
             if (scopeW < 4) scopeW = 4;
+            float x0 = cellX + 1;
 
+            // Bordure entre canaux
+            if (ch > 0)
+                canvas.DrawLine(cellX, 0, cellX, height, _borderPaint);
+
+            // Ligne centrale
             canvas.DrawLine(x0, halfH, x0 + scopeW, halfH, _centerPaint);
 
+            // Waveform
             var data = _scopeSmooth![ch];
             _scopePaint.Color = Ft2Theme.ScopeColors[ch % Ft2Theme.ScopeColors.Length];
             float step = (float)SCOPE_SIZE / scopeW;
@@ -119,34 +141,27 @@ public class ScopesVuRenderer
                 else path.LineTo(x0 + px, y);
             }
             canvas.DrawPath(path, _scopePaint);
-        }
 
-        // VU segments allumés
-        int[][] vuRanges = { new[] { 0, 4 }, new[] { 4, 6 }, new[] { 6, 8 } };
-        for (int pass = 0; pass < 3; pass++)
-        {
-            _vuPaint.Color = VuOnColors[pass];
-            int sMin = vuRanges[pass][0], sMax = vuRanges[pass][1];
-            for (int ch = 0; ch < channelCount; ch++)
-            {
-                int segs = Math.Min(8, (int)(_vuSmooth[ch] * 8 + 0.5f));
-                float scopeW = cellW - vuW - 3;
-                if (scopeW < 4) scopeW = 4;
-                float vuX = ch * cellW + scopeW + 2;
-                for (int s = sMin; s < sMax && s < segs; s++)
-                    canvas.DrawRect(vuX, h - 1 - (s + 1) * segH, vuW, segH - 1, _vuPaint);
-            }
-        }
-
-        // VU segments éteints
-        for (int ch = 0; ch < channelCount; ch++)
-        {
+            // VU segments allumés
             int segs = Math.Min(8, (int)(_vuSmooth[ch] * 8 + 0.5f));
-            float scopeW = cellW - vuW - 3;
-            if (scopeW < 4) scopeW = 4;
-            float vuX = ch * cellW + scopeW + 2;
+            float vuX = cellX + scopeW + 2;
+
+            int[][] vuRanges = { new[] { 0, 4 }, new[] { 4, 6 }, new[] { 6, 8 } };
+            for (int pass = 0; pass < 3; pass++)
+            {
+                _vuPaint.Color = VuOnColors[pass];
+                int sMin = vuRanges[pass][0], sMax = vuRanges[pass][1];
+                for (int s = sMin; s < sMax && s < segs; s++)
+                    canvas.DrawRect(vuX, height - 1 - (s + 1) * segH,
+                        vuW, segH - 1, _vuPaint);
+            }
+
+            // VU segments éteints
             for (int s = segs; s < 8; s++)
-                canvas.DrawRect(vuX, h - 1 - (s + 1) * segH, vuW, segH - 1, _vuOffPaint);
+                canvas.DrawRect(vuX, height - 1 - (s + 1) * segH,
+                    vuW, segH - 1, _vuOffPaint);
         }
+
+        canvas.Restore();
     }
 }

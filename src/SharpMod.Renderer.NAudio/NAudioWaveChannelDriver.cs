@@ -59,7 +59,9 @@ namespace SharpMod.SoundRenderer
                 case Output.WaveOut:
                     waveOut = new WaveOutEvent
                     {
-                        DesiredLatency = Latency
+                        // DesiredLatency = Latency
+                        DesiredLatency = 100,
+                        NumberOfBuffers =3
                     };
                     break;
                 case Output.DirectSound:

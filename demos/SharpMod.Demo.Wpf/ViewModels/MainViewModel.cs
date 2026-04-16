@@ -1,4 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 using SharpMod.Demo.Wpf.Renderers;
 using SharpMod.SoundRenderer;
 using SharpMod.Song;
@@ -15,7 +17,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private SpectrumAnalyzer? _spectrumAnalyzer;
 
     private const int SCOPE_SIZE = 128;
-    private const int SPECTRUM_BANDS = 32;
+    private const int SPECTRUM_BANDS = 64;
 
     [ObservableProperty] private string _moduleTitle = "SharpMod ── Drop a .MOD .S3M .XM file";
     [ObservableProperty] private string _statusMessage = "Ready";
@@ -38,6 +40,48 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     public SongModule? CurrentModule => _module;
 
+    // ═══════════════════════════════════
+    // Commands MVVM
+    // ═══════════════════════════════════
+
+    public IRelayCommand PlayCommand { get; }
+    public IRelayCommand StopCommand { get; }
+    public IRelayCommand PauseCommand { get; }
+    public IRelayCommand OpenFileCommand { get; }
+
+    public MainViewModel()
+    {
+        PlayCommand = new RelayCommand(Play, () => _module != null && !IsPlaying);
+        StopCommand = new RelayCommand(Stop, () => _module != null && IsPlaying);
+        PauseCommand = new RelayCommand(Pause, () => _module != null && IsPlaying);
+        OpenFileCommand = new RelayCommand(OpenFile);
+    }
+
+    partial void OnIsPlayingChanged(bool value)
+    {
+        PlayCommand.NotifyCanExecuteChanged();
+        StopCommand.NotifyCanExecuteChanged();
+        PauseCommand.NotifyCanExecuteChanged();
+    }
+
+    private void OpenFile()
+    {
+        var dlg = new OpenFileDialog
+        {
+            Filter = "Tracker Modules|*.mod;*.s3m;*.xm|All files|*.*",
+            Title = "Open Module"
+        };
+        if (dlg.ShowDialog() == true)
+        {
+            LoadModule(dlg.FileName);
+            Play();
+        }
+    }
+
+    // ═══════════════════════════════════
+    // Module loading
+    // ═══════════════════════════════════
+
     public void LoadModule(string filePath)
     {
         Stop();
@@ -53,18 +97,18 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
             _player = new ModulePlayer(_module);
 
-            // ★ FIX BPM : forcer le rate à 44100 (identique au Blazor)
-            // Le MixCfg.Rate par défaut est 48000 dans le constructeur de ModulePlayer
-            // mais les timings BPM sont calibrés pour 44100
-            _player.MixCfg.Rate = 44100;
-
             _renderer = new NAudioWaveChannelDriver(
                 NAudioWaveChannelDriver.Output.WaveOut);
             _player.RegisterRenderer(_renderer);
 
+            System.Diagnostics.Debug.WriteLine(
+                $"[SharpMod] Rate={_player.MixCfg.Rate} " +
+                $"WaveFormat={_renderer.TrackerStream?.WaveFormat?.SampleRate} " +
+                $"Is16Bits={_player.MixCfg.Is16Bits} " +
+                $"Style={_player.MixCfg.Style}");
+
             _spectrumAnalyzer = new SpectrumAnalyzer(SPECTRUM_BANDS);
 
-            // Brancher le spectrum sur les samples audio
             if (_renderer.TrackerStream != null)
                 _renderer.TrackerStream.OnSamplesGenerated += OnAudioSamplesGenerated;
 
@@ -81,6 +125,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
             _player.OnGetPlayerInfos += OnPlayerInfos;
             _player.OnCurrentModulePlayEnd += OnPlayEnd;
+
+            // Rafraîchir le CanExecute des commands après chargement
+            PlayCommand.NotifyCanExecuteChanged();
+            StopCommand.NotifyCanExecuteChanged();
+            PauseCommand.NotifyCanExecuteChanged();
+
             NotifyPositionDisplays();
         }
         catch (Exception ex)
@@ -93,6 +143,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         _spectrumAnalyzer?.AddStereoBytes(buffer, bytesRead);
     }
+
+    // ═══════════════════════════════════
+    // Playback
+    // ═══════════════════════════════════
 
     public void Play()
     {
@@ -130,10 +184,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
         NotifyPositionDisplays();
     }
 
-    /// <summary>
-    /// Appelé ~60fps par CompositionTarget.Rendering.
-    /// Ne fait que copier les données volatiles (léger).
-    /// </summary>
+    // ═══════════════════════════════════
+    // Visualization (appelé ~60fps)
+    // ═══════════════════════════════════
+
     public void UpdateVisualizationData()
     {
         if (_player == null || !IsPlaying) return;
@@ -156,6 +210,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
             }
         }
     }
+
+    // ═══════════════════════════════════
+    // Events player
+    // ═══════════════════════════════════
 
     private void OnPlayerInfos(object sender, SharpModEventArgs e)
     {
