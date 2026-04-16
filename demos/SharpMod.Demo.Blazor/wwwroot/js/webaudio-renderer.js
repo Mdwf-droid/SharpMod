@@ -266,6 +266,17 @@ function _fetchVisuals() {
         }
     }
 
+    // Notifier Blazor des positions (throttlé à ~10fps)
+    var now = performance.now();
+    if (!audio._lastPosNotify) audio._lastPosNotify = 0;
+    if (now - audio._lastPosNotify > 100) {
+        audio._lastPosNotify = now;
+        if (audio.dotnetRef) {
+            audio.dotnetRef.invokeMethodAsync('NotifyPosition',
+                audio.songPosition, audio.patternNumber, audio.patternPosition);
+        }
+    }
+
     var vuOffset = 16;
     for (var ch = 0; ch < chCount; ch++) {
         audio.vuLevels[ch] = rawBytes[vuOffset + ch] / 255.0;

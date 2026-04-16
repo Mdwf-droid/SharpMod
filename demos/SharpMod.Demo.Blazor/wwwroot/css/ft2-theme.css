@@ -1,6 +1,6 @@
 ﻿/* ═══════════════════════════════════════════════════
-   FASTTRACKER II – DARK BLUE-GRAY THEME  v5
-   Modern flat buttons, FFT, vertical VU-meters
+   FASTTRACKER II – DARK BLUE-GRAY THEME  v6
+   + Panel Positions
    ═══════════════════════════════════════════════════ */
 
 :root {
@@ -83,7 +83,7 @@ html, body {
 }
 
 /* ══════════════════════════════
-   BUTTONS — Modern flat style
+   BUTTONS
    ══════════════════════════════ */
 .ft2-btn {
     background: linear-gradient(180deg, #2E3650 0%, #222838 100%);
@@ -172,15 +172,15 @@ html, body {
         flex: 1;
     }
 
-/* ── Top Section ── */
+/* ── Top Section : Song Info | Positions | Spectrum | Instruments ── */
 .ft2-top {
     display: flex;
     gap: var(--ft2-gap);
-    height: 140px; 
+    height: 140px;
     flex-shrink: 0;
 }
 
-/* Left: Song Info */
+/* Song Info (left) */
 .ft2-song-info {
     flex: 1;
     display: flex;
@@ -211,14 +211,109 @@ html, body {
     padding: 3px;
 }
 
-/* Center: FFT Spectrum */
-/* ── FFT panel — contenu dans le bandeau top ── */
+/* ── Positions Panel ── */
+.ft2-positions-panel {
+    width: 120px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+    .ft2-positions-panel .panel-title {
+        height: 16px;
+        line-height: 16px;
+        text-align: center;
+        color: var(--ft2-accent-light);
+        font-size: 9px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        flex-shrink: 0;
+    }
+
+.ft2-positions-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    gap: 2px;
+    padding: 0 2px;
+}
+
+.ft2-pos-header {
+    padding: 2px 4px;
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.ft2-pos-row {
+    display: flex;
+    gap: 4px;
+}
+
+.ft2-pos-label {
+    color: var(--ft2-text-dim);
+    min-width: 24px;
+}
+
+.ft2-pos-value {
+    color: var(--ft2-text-bright);
+}
+
+.ft2-pos-list {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 10px;
+    line-height: 14px;
+    padding: 1px;
+}
+
+.ft2-pos-entry {
+    display: flex;
+    gap: 2px;
+    padding: 0 4px;
+    height: 13px;
+    line-height: 13px;
+    color: var(--ft2-text-dim);
+    white-space: nowrap;
+}
+
+    .ft2-pos-entry:hover {
+        background: var(--ft2-row-active);
+        border-radius: 2px;
+    }
+
+    .ft2-pos-entry.active {
+        background: #1A2540;
+        color: #FFD040;
+    }
+
+.ft2-pos-idx {
+    min-width: 16px;
+    color: var(--ft2-row-num);
+}
+
+.ft2-pos-sep {
+    color: var(--ft2-shadow);
+}
+
+.ft2-pos-pat {
+    color: var(--ft2-text);
+}
+
+.ft2-pos-entry.active .ft2-pos-idx,
+.ft2-pos-entry.active .ft2-pos-sep,
+.ft2-pos-entry.active .ft2-pos-pat {
+    color: #FFD040;
+}
+
+/* ── FFT Spectrum Panel ── */
 .ft2-fft-panel {
     width: 280px;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* ← Empêche le débordement */
-    min-height: 0; /* ← Permet au flex de shrink */
+    overflow: hidden;
+    min-height: 0;
 }
 
     .ft2-fft-panel .panel-title {
@@ -234,20 +329,20 @@ html, body {
 .ft2-fft-canvas-wrap {
     flex: 1;
     position: relative;
-    overflow: hidden; /* ← Clippe le canvas */
-    min-height: 0; /* ← Crucial pour flex shrink */
+    overflow: hidden;
+    min-height: 0;
 }
 
     .ft2-fft-canvas-wrap canvas {
-        position: absolute; /* ← Détache du flow */
-        inset: 0; /* ← Remplit exactement le parent */
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
         display: block;
         border-radius: 2px;
     }
 
-/* Right: Instrument List */
+/* ── Instrument Panel ── */
 .ft2-instrument-panel {
     width: 240px;
     display: flex;
@@ -298,7 +393,9 @@ html, body {
         white-space: nowrap;
     }
 
-/* ── Scopes + VU Meters Row ── */
+/* ══════════════════════════════
+   SCOPES + VU
+   ══════════════════════════════ */
 .ft2-scopes-row {
     height: 52px;
     flex-shrink: 0;
@@ -307,15 +404,13 @@ html, body {
 }
 
     .ft2-scopes-row canvas {
-        position: absolute;
-        inset: 0;
         width: 100%;
         height: 100%;
         display: block;
+        border-radius: 2px;
+        transition: none;
     }
 
-
-/* VU Meter vertical bar per channel */
 .ft2-vu-col {
     width: 6px;
     display: flex;
@@ -374,12 +469,12 @@ html, body {
 .ft2-chan-headers-inner {
     display: flex;
     flex: 1;
-    min-width: max-content; /* ← Les headers font la même largeur que les rows */
-    transition: none; /* ← Pas de transition sur le translate */
+    min-width: max-content;
+    transition: none;
 }
 
 .ft2-chan-header {
-    min-width: 116px; /* ← Doit correspondre à .ft2-cell min-width */
+    min-width: 116px;
     flex: 1;
     text-align: center;
     color: var(--ft2-accent-light);
@@ -389,7 +484,6 @@ html, body {
     letter-spacing: 1px;
 }
 
-/* Pattern grid — BOTH axes scrollable */
 .ft2-pattern-grid-wrapper {
     flex: 1;
     overflow: hidden;
@@ -438,7 +532,6 @@ html, body {
         font-weight: bold;
     }
 
-    /* Active row left marker */
     .ft2-row.active::before {
         content: '';
         position: absolute;
@@ -453,16 +546,16 @@ html, body {
 .ft2-cell {
     display: inline-flex;
     gap: 0;
-    min-width: 116px; 
+    min-width: 116px;
     flex: 1;
     padding: 0 3px;
     border-right: 1px solid rgba(30, 36, 51, 0.6);
-    overflow: hidden; /* ← Évite tout débordement */
+    overflow: hidden;
 }
 
     .ft2-cell .note {
         color: var(--ft2-note);
-        width: 3ch; /* ← Largeur en caractères, pas en pixels */
+        width: 3ch;
         flex-shrink: 0;
     }
 
@@ -493,7 +586,7 @@ html, body {
     }
 
     .ft2-cell .sep {
-        width: 0.6ch; /* ← Espace proportionnel */
+        width: 0.6ch;
         flex-shrink: 0;
     }
 
@@ -508,26 +601,30 @@ html, body {
         flex-shrink: 0;
     }
 
-/* ── Scrollbar commune (pattern + instruments) ── */
+/* ── Scrollbar commune (pattern + instruments + positions) ── */
 .ft2-pattern-grid::-webkit-scrollbar,
-.ft2-inst-list::-webkit-scrollbar {
+.ft2-inst-list::-webkit-scrollbar,
+.ft2-pos-list::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 
 .ft2-pattern-grid::-webkit-scrollbar-track,
-.ft2-inst-list::-webkit-scrollbar-track {
+.ft2-inst-list::-webkit-scrollbar-track,
+.ft2-pos-list::-webkit-scrollbar-track {
     background: var(--ft2-panel-dark);
 }
 
 .ft2-pattern-grid::-webkit-scrollbar-thumb,
-.ft2-inst-list::-webkit-scrollbar-thumb {
+.ft2-inst-list::-webkit-scrollbar-thumb,
+.ft2-pos-list::-webkit-scrollbar-thumb {
     background: var(--ft2-highlight);
     border-radius: 3px;
 }
 
     .ft2-pattern-grid::-webkit-scrollbar-thumb:hover,
-    .ft2-inst-list::-webkit-scrollbar-thumb:hover {
+    .ft2-inst-list::-webkit-scrollbar-thumb:hover,
+    .ft2-pos-list::-webkit-scrollbar-thumb:hover {
         background: var(--ft2-accent);
     }
 
@@ -552,20 +649,3 @@ html, body {
     font-size: 13px;
 }
 
-
-
-/* ── Scopes : clipper le débordement ── */
-.ft2-scopes-row {
-    height: 52px;
-    flex-shrink: 0;
-    position: relative;
-    overflow: hidden; /* ← Clippe le translateX négatif */
-}
-
-    .ft2-scopes-row canvas {
-        width: 100%;
-        height: 100%;
-        display: block;
-        border-radius: 2px;
-        transition: none; /* ← Pas de transition sur le translate */
-    }

@@ -26,6 +26,9 @@ public class WebAudioRenderer : IRenderer
     public ModulePlayer Player { get; set; }
     public event Action<int, int> PatternChanged;
 
+    // Event déclenché par le JS à chaque changement de position (throttlé 10fps)
+    public event Action<int, int, int>? OnPositionChanged;
+
     public WebAudioRenderer(IJSRuntime js)
     {
         _js = js;
@@ -64,7 +67,19 @@ public class WebAudioRenderer : IRenderer
     [JSInvokable]
     public void OnPatternChanged(int songPosition, int patternNumber)
     {
+        _songPosition = songPosition;
+        _patternNumber = patternNumber;
         PatternChanged?.Invoke(songPosition, patternNumber);
+    }
+
+    // Appelé par le JS depuis _fetchVisuals()
+    [JSInvokable]
+    public void NotifyPosition(int songPosition, int patternNumber, int patternPosition)
+    {
+        _songPosition = songPosition;
+        _patternNumber = patternNumber;
+        _patternPosition = patternPosition;
+        OnPositionChanged?.Invoke(songPosition, patternNumber, patternPosition);
     }
 
     [JSInvokable]

@@ -2,6 +2,7 @@
 @using SharpMod.Demo.Blazor.Services
 @using SharpMod.Demo.Blazor.Components
 @using System.IO
+@using SharpMod.Song
 @inject PlayerService Player
 @inject IJSRuntime JS
 
@@ -40,6 +41,47 @@
             </div>
         </div>
 
+        @* ── Positions (NOUVEAU — même niveau que les autres panels) ── *@
+        <div class="ft2-positions-panel ft2-panel">
+            <div class="panel-title">Positions</div>
+            <div class="ft2-positions-body">
+                @if (_currentModule != null)
+                {
+                    <div class="ft2-pos-header">
+                        <div class="ft2-pos-row">
+                            <span class="ft2-pos-label">Sng</span>
+                            <span class="ft2-pos-value">@($"{Player.SongPosition:D3}") / @($"{_currentModule.Positions.Count:D3}")</span>
+                        </div>
+                        <div class="ft2-pos-row">
+                            <span class="ft2-pos-label">Pat</span>
+                            <span class="ft2-pos-value">@($"{Player.PatternNumber:D3}")</span>
+                        </div>
+                        <div class="ft2-pos-row">
+                            <span class="ft2-pos-label">Row</span>
+                            <span class="ft2-pos-value">@($"{Player.PatternPosition:D2}")</span>
+                        </div>
+                    </div>
+                    <div class="ft2-pos-list ft2-panel-inset">
+                        @for (int i = 0; i < _currentModule.Positions.Count; i++)
+                        {
+                            var idx = i;
+                            <div class="ft2-pos-entry @(idx == Player.SongPosition ? "active" : "")">
+                                <span class="ft2-pos-idx">@($"{idx:X2}")</span>
+                                <span class="ft2-pos-sep">│</span>
+                                <span class="ft2-pos-pat">@($"{_currentModule.Positions[idx]:X2}")</span>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="ft2-panel-inset" style="flex:1; display:flex; align-items:center; justify-content:center;">
+                        <span style="color:#304060;">---</span>
+                    </div>
+                }
+            </div>
+        </div>
+
         <div class="ft2-fft-panel ft2-panel">
             <div class="panel-title">Spectrum</div>
             <div class="ft2-fft-canvas-wrap ft2-panel-inset">
@@ -75,24 +117,33 @@
 </div>
 
 @code {
+
+    private SongModule? _currentModule;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
+        {
+            Player.OnStateChanged += OnStateChanged;
             await Player.InitializeAsync(JS);
+        }
+    }
+
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
     }
 
     private async Task OnPlay()
     {
         await Player.PlayAsync();
 
-        // Init scopes si pas encore fait
         try
         {
             await JS.InvokeVoidAsync("ft2InitScopes", Player.ChannelCount);
         }
         catch { }
 
-        // Lancer LA boucle unique — FFT + Scopes + Pattern
         try
         {
             await JS.InvokeVoidAsync("ft2StartAll",
@@ -122,6 +173,13 @@
         using var ms = new MemoryStream();
         await stream.CopyToAsync(ms);
         await Player.LoadModuleAsync(ms.ToArray(), file.Name);
+
+        _currentModule = Player.CurrentModule;
         StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        Player.OnStateChanged -= OnStateChanged;
     }
 }

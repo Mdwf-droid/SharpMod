@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components.RenderTree;
 using Microsoft.JSInterop;
 using SharpMod;
 using SharpMod.Song;
@@ -30,6 +31,8 @@ public class PlayerService : IDisposable
 
     public event Action OnStateChanged;
 
+    private WebAudioRenderer _renderer;
+
     public async Task InitializeAsync(IJSRuntime js)
     {
         _js = js;
@@ -54,8 +57,8 @@ public class PlayerService : IDisposable
 
             _player = new ModulePlayer(_module);
 
-            var renderer = new WebAudioRenderer(_js);
-            _player.RegisterRenderer(renderer);
+            _renderer = new WebAudioRenderer(_js);
+            _player.RegisterRenderer(_renderer);
 
             // PAS de renderer.PatternChanged
             // PAS de timer
@@ -84,6 +87,11 @@ public class PlayerService : IDisposable
         try { await _js.InvokeVoidAsync("SharpModAudio.initialize"); }
         catch { }
 
+        if (_renderer != null)
+        {
+            _renderer.OnPositionChanged += OnRendererPositionChanged;
+        }
+
         _player.Start();
         IsPlaying = true;
         StatusMessage = "Playing...";
@@ -93,7 +101,16 @@ public class PlayerService : IDisposable
     public async Task StopAsync()
     {
         if (_player == null) return;
+
+
+
         _player.Stop();
+
+        if (_renderer != null)
+        {
+            _renderer.OnPositionChanged -= OnRendererPositionChanged;
+        }
+
         IsPlaying = false;
         SongPosition = 0;
         PatternNumber = 0;
@@ -118,6 +135,14 @@ public class PlayerService : IDisposable
     }
 
     private void NotifyStateChanged() => OnStateChanged?.Invoke();
+
+    private void OnRendererPositionChanged(int songPos, int patNum, int patPos)
+    {
+        SongPosition = songPos;
+        PatternNumber = patNum;
+        PatternPosition = patPos;
+        NotifyStateChanged();
+    }
 
     public void Dispose() { }
 }
