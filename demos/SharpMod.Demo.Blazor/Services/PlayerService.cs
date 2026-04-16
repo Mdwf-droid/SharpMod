@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.Components.RenderTree;
 using Microsoft.JSInterop;
-using SharpMod;
 using SharpMod.Song;
 using System;
 using System.IO;
@@ -13,7 +11,10 @@ public class PlayerService : IDisposable
     private IJSRuntime _js;
     private ModulePlayer _player;
     private SongModule _module;
+    private WebAudioRenderer _renderer;
+    private System.Threading.Timer _positionTimer;
 
+    // ── Propriétés publiques ──
     public string ModuleName { get; private set; }
     public string ModuleType { get; private set; }
     public int ChannelCount { get; private set; }
@@ -22,22 +23,24 @@ public class PlayerService : IDisposable
     public bool IsPlaying { get; private set; }
     public string StatusMessage { get; set; } = "Ready ── Drop a .MOD .S3M .XM file";
 
-    public int SongPosition { get; set; }
-    public int PatternNumber { get; set; }
-    public int PatternPosition { get; set; }
+    public int SongPosition { get; private set; }
+    public int PatternNumber { get; private set; }
+    public int PatternPosition { get; private set; }
 
     public SongModule CurrentModule => _module;
     public ModulePlayer CurrentPlayer => _player;
 
+    // ── Events ──
     public event Action OnStateChanged;
+    public event Action<int, int> OnPatternChanged;
 
-    private WebAudioRenderer _renderer;
-
+    // ── Init ──
     public async Task InitializeAsync(IJSRuntime js)
     {
         _js = js;
     }
 
+    // ── Load ──
     public async Task LoadModuleAsync(byte[] fileData, string fileName)
     {
         try
@@ -56,19 +59,18 @@ public class PlayerService : IDisposable
             }
 
             _player = new ModulePlayer(_module);
-
             _renderer = new WebAudioRenderer(_js);
             _player.RegisterRenderer(_renderer);
-
-            // PAS de renderer.PatternChanged
-            // PAS de timer
-            // La position est encodée dans FillBuffer
 
             ModuleName = _module.SongName;
             ModuleType = _module.ModType;
             ChannelCount = _module.ChannelsCount;
             Speed = _module.InitialSpeed;
             BPM = _module.InitialTempo;
+
+            SongPosition = 0;
+            PatternNumber = 0;
+            PatternPosition = 0;
 
             StatusMessage = $"Loaded: {fileName} ── {_module.SongName}";
             NotifyStateChanged();
@@ -80,6 +82,7 @@ public class PlayerService : IDisposable
         }
     }
 
+    // ── Play ──
     public async Task PlayAsync()
     {
         if (_player == null) return;
@@ -87,39 +90,39 @@ public class PlayerService : IDisposable
         try { await _js.InvokeVoidAsync("SharpModAudio.initialize"); }
         catch { }
 
-        if (_renderer != null)
-        {
-            _renderer.OnPositionChanged += OnRendererPositionChanged;
-        }
-
         _player.Start();
         IsPlaying = true;
         StatusMessage = "Playing...";
+
+        // Démarrer le timer de polling des positions (~12fps)
+        _positionTimer = new System.Threading.Timer(
+            PollPositions, null, 0, 80);
+
         NotifyStateChanged();
     }
 
+    // ── Stop ──
     public async Task StopAsync()
     {
+        _positionTimer?.Dispose();
+        _positionTimer = null;
+
         if (_player == null) return;
 
-
-
         _player.Stop();
-
-        if (_renderer != null)
-        {
-            _renderer.OnPositionChanged -= OnRendererPositionChanged;
-        }
-
         IsPlaying = false;
         SongPosition = 0;
         PatternNumber = 0;
         PatternPosition = 0;
         StatusMessage = "Stopped";
-        await (_js?.InvokeVoidAsync("SharpModAudio.stop") ?? ValueTask.CompletedTask);
+
+        try { await _js.InvokeVoidAsync("SharpModAudio.stop"); }
+        catch { }
+
         NotifyStateChanged();
     }
 
+    // ── Pause ──
     public async Task PauseAsync()
     {
         if (_player == null) return;
@@ -127,22 +130,44 @@ public class PlayerService : IDisposable
         _player.Pause();
         IsPlaying = !IsPlaying;
 
-        // Synchroniser l'état avec le JS AudioContext
-        await _js.InvokeVoidAsync("SharpModAudio.pause");
+        try { await _js.InvokeVoidAsync("SharpModAudio.pause"); }
+        catch { }
 
         StatusMessage = IsPlaying ? "Playing..." : "Paused";
         NotifyStateChanged();
     }
 
-    private void NotifyStateChanged() => OnStateChanged?.Invoke();
-
-    private void OnRendererPositionChanged(int songPos, int patNum, int patPos)
+    // ── Timer : poll les positions depuis le renderer (C# pur, zéro interop) ──
+    private void PollPositions(object state)
     {
+        if (_renderer == null || !IsPlaying) return;
+
+        var songPos = _renderer.SongPosition;
+        var patNum = _renderer.PatternNumber;
+        var patPos = _renderer.PatternPosition;
+
+        bool changed = songPos != SongPosition
+                    || patNum != PatternNumber
+                    || patPos != PatternPosition;
+
+        if (!changed) return;
+
+        bool patternChanged = patNum != PatternNumber;
+
         SongPosition = songPos;
         PatternNumber = patNum;
         PatternPosition = patPos;
+
+        if (patternChanged)
+            OnPatternChanged?.Invoke(songPos, patNum);
+
         NotifyStateChanged();
     }
 
-    public void Dispose() { }
+    private void NotifyStateChanged() => OnStateChanged?.Invoke();
+
+    public void Dispose()
+    {
+        _positionTimer?.Dispose();
+    }
 }

@@ -62,7 +62,7 @@
     private int channelCount = 4;
     private int rowCount = 64;
     private int lastPatternNumber = -1;
-    private int lastModuleHash = 0;  // ← Détecter changement de module
+    private int lastModuleHash = 0;
 
     protected override void OnInitialized()
     {
@@ -74,12 +74,11 @@
         var module = Player.CurrentModule;
         if (module == null) return;
 
-        // ══ Détecter changement de module (nouveau fichier chargé) ══
         int moduleHash = module.GetHashCode();
         if (moduleHash != lastModuleHash)
         {
             lastModuleHash = moduleHash;
-            lastPatternNumber = -1;  // Force re-render
+            lastPatternNumber = -1;
             channelCount = module.ChannelsCount;
         }
 
@@ -89,7 +88,7 @@
         {
             currentPattern = module.Patterns[patNum];
             rowCount = currentPattern.RowsCount;
-            channelCount = module.ChannelsCount;  // ← Toujours mettre à jour
+            channelCount = module.ChannelsCount;
             lastPatternNumber = patNum;
 
             InvokeAsync(async () =>
@@ -100,9 +99,8 @@
                 {
                     await JS.InvokeVoidAsync("ft2UpdatePatternGrid",
                         "patternGrid", rowCount);
-                    // ══ Brancher le scroll sync après re-render ══
                     await JS.InvokeVoidAsync("ft2SyncScrollInit",
-                        "patternGrid", "patternHeadersInner", "scopesCanvas");
+                        "patternGrid", "patternHeadersInner");
                 }
                 catch { }
             });
@@ -124,7 +122,6 @@
             ? $"{NoteNames[pc.Note.Value]}{(pc.Octave.HasValue ? (pc.Octave.Value + 1).ToString() : "-")}"
             : "···";
         string inst = pc.Instrument != 0 ? pc.Instrument.ToString("X2") : "··";
-        
         string vol = "··";
         string fx = (pc.Effect != 0 || pc.EffectData != 0) ? $"{pc.Effect:X1}" : "·";
         string fxd = (pc.Effect != 0 || pc.EffectData != 0) ? $"{pc.EffectData:X2}" : "··";
