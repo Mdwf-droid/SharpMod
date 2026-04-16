@@ -66,57 +66,21 @@ window.SharpModAudio = {
             }
 
             var audioByteCount = self.bufferSize * 4;
-            var rawBytes = self.dotnetRef.invokeMethod('FillBuffer', audioByteCount);
+            var rawBytes = self.dotnetRef.invokeMethod('FillAudio', audioByteCount);
 
             var left = event.outputBuffer.getChannelData(0);
             var right = event.outputBuffer.getChannelData(1);
 
-            if (!rawBytes || rawBytes.length < 16) {
+            if (!rawBytes || rawBytes.length < 4) {
                 left.fill(0);
                 right.fill(0);
                 return;
             }
 
             var view = new DataView(new Uint8Array(rawBytes).buffer);
-
-            // ── Header fixe (16 bytes) ──
-            self.songPosition = view.getInt32(0, true);
-            self.patternNumber = view.getInt32(4, true);
-            self.patternPosition = view.getInt32(8, true);
-            var chCount = view.getInt32(12, true);
-
-            if (chCount !== self.channelCount) {
-                self.channelCount = chCount;
-                self.vuLevels = new Float64Array(chCount);
-                self.scopeData = [];
-                for (var i = 0; i < chCount; i++) {
-                    self.scopeData.push(new Float32Array(self.SCOPE_SIZE));
-                }
-            }
-
-            var headerSize = 16 + chCount + (chCount * self.SCOPE_SIZE);
-
-            // ── VU levels ──
-            var vuOffset = 16;
-            for (var ch = 0; ch < chCount; ch++) {
-                self.vuLevels[ch] = rawBytes[vuOffset + ch] / 255.0;
-            }
-
-            // ── Scope data ──
-            var scopeOffset = vuOffset + chCount;
-            for (var ch = 0; ch < chCount; ch++) {
-                var buf = self.scopeData[ch];
-                var off = scopeOffset + ch * self.SCOPE_SIZE;
-                for (var i = 0; i < self.SCOPE_SIZE; i++) {
-                    var b = rawBytes[off + i];
-                    buf[i] = (b < 128 ? b : b - 256) / 128.0;
-                }
-            }
-
-            // ── Audio PCM ──
             var bufSize = self.bufferSize;
             for (var i = 0; i < bufSize; i++) {
-                var offset = headerSize + i * 4;
+                var offset = i * 4;
                 if (offset + 3 < rawBytes.length) {
                     left[i] = view.getInt16(offset, true) / 32768.0;
                     right[i] = view.getInt16(offset + 2, true) / 32768.0;
@@ -229,6 +193,7 @@ window.ft2StartAll = function (fftCanvasId, scopeCanvasId, patternGridId,
 
     function mainLoop() {
         _ft2AnimId = requestAnimationFrame(mainLoop);
+        _fetchVisuals();  // ★ AJOUTÉ
         drawFFT();
         drawScopes();
         updatePattern();
@@ -277,6 +242,45 @@ window.ft2SyncScrollInit = function (gridId, headersInnerId, scopeCanvasId) {
         }
     });
 };
+
+function _fetchVisuals() {
+    var audio = window.SharpModAudio;
+    if (!audio.isPlaying || !audio.dotnetRef) return;
+
+    var rawBytes = audio.dotnetRef.invokeMethod('FillVisuals');
+    if (!rawBytes || rawBytes.length < 16) return;
+
+    var view = new DataView(new Uint8Array(rawBytes).buffer);
+
+    audio.songPosition = view.getInt32(0, true);
+    audio.patternNumber = view.getInt32(4, true);
+    audio.patternPosition = view.getInt32(8, true);
+    var chCount = view.getInt32(12, true);
+
+    if (chCount !== audio.channelCount) {
+        audio.channelCount = chCount;
+        audio.vuLevels = new Float64Array(chCount);
+        audio.scopeData = [];
+        for (var i = 0; i < chCount; i++) {
+            audio.scopeData.push(new Float32Array(audio.SCOPE_SIZE));
+        }
+    }
+
+    var vuOffset = 16;
+    for (var ch = 0; ch < chCount; ch++) {
+        audio.vuLevels[ch] = rawBytes[vuOffset + ch] / 255.0;
+    }
+
+    var scopeOffset = vuOffset + chCount;
+    for (var ch = 0; ch < chCount; ch++) {
+        var buf = audio.scopeData[ch];
+        var off = scopeOffset + ch * audio.SCOPE_SIZE;
+        for (var i = 0; i < audio.SCOPE_SIZE; i++) {
+            var b = rawBytes[off + i];
+            buf[i] = (b < 128 ? b : b - 256) / 128.0;
+        }
+    }
+}
 
 // ──────────────
 // FFT

@@ -9,6 +9,8 @@ public class WebAudioRenderer : IRenderer
     private DotNetObjectReference<WebAudioRenderer> _dotNetRef;
     private byte[] _outputBuffer;
     private byte[] _resultBuffer;
+    private byte[]? _audioOnlyBuffer;
+    private byte[]? _visualsOnlyBuffer;
 
     private const int SCOPE_SIZE = 128; // Doit correspondre à SCOPE_BUFFER_SIZE du mixer
 
@@ -131,6 +133,92 @@ public class WebAudioRenderer : IRenderer
         Buffer.BlockCopy(_outputBuffer, 0, _resultBuffer, headerSize, byteCount);
 
         return _resultBuffer;
+    }
+
+    [JSInvokable]
+    public byte[]? FillAudio(int byteCount)
+    {
+        if (Player == null || !Player.IsPlaying)
+            return null;
+
+        if (_audioOnlyBuffer == null || _audioOnlyBuffer.Length < byteCount)
+            _audioOnlyBuffer = new byte[byteCount];
+
+        int read = Player.GetBytes(_audioOnlyBuffer, byteCount);
+        if (read <= 0)
+            return null;
+
+        if (read == byteCount)
+            return _audioOnlyBuffer;
+
+        // Rare : retourner un slice exact
+        var result = new byte[read];
+        Buffer.BlockCopy(_audioOnlyBuffer, 0, result, 0, read);
+        return result;
+    }
+
+    [JSInvokable]
+    public byte[]? FillVisuals()
+    {
+        if (Player == null || !Player.IsPlaying)
+            return null;
+
+        var module = Player.CurrentModule;
+        if (module == null)
+            return null;
+
+        int channels = module.ChannelsCount;
+        int headerSize = 16 + channels + (channels * 128); // même calcul que FillBuffer
+
+        if (_visualsOnlyBuffer == null || _visualsOnlyBuffer.Length < headerSize)
+            _visualsOnlyBuffer = new byte[headerSize];
+
+        int offset = 0;
+
+        // ── Header fixe (16 bytes) — même code que FillBuffer ──
+        WriteInt32LE(_visualsOnlyBuffer, offset, _songPosition); offset += 4;
+        WriteInt32LE(_visualsOnlyBuffer, offset, _patternNumber); offset += 4;
+        WriteInt32LE(_visualsOnlyBuffer, offset, _patternPosition); offset += 4;
+        WriteInt32LE(_visualsOnlyBuffer, offset, channels); offset += 4;
+
+        // ── VU peaks — même code que FillBuffer ──
+        Player.GetChannelLevels(out int[] volumes, out int[] peaks, out int count);
+        for (int ch = 0; ch < channels; ch++)
+        {
+            int peak = (ch < count) ? peaks[ch] : 0;
+            _visualsOnlyBuffer[offset++] = (byte)Math.Min(255, Math.Max(0, peak));
+        }
+
+        // ── Scope data — même code que FillBuffer ──
+        for (int ch = 0; ch < channels; ch++)
+        {
+            sbyte[]? scopeData = Player.GetScopeData(ch);
+            if (scopeData != null)
+            {
+                int len = Math.Min(scopeData.Length, 128);
+                for (int i = 0; i < len; i++)
+                    _visualsOnlyBuffer[offset + i] = (byte)scopeData[i];
+                for (int i = len; i < 128; i++)
+                    _visualsOnlyBuffer[offset + i] = 0;
+            }
+            else
+            {
+                for (int i = 0; i < 128; i++)
+                    _visualsOnlyBuffer[offset + i] = 0;
+            }
+            offset += 128;
+        }
+
+        return _visualsOnlyBuffer;
+    }
+
+    // Helper — si tu n'as pas déjà cette méthode dans la classe
+    private static void WriteInt32LE(byte[] buf, int offset, int value)
+    {
+        buf[offset] = (byte)(value & 0xFF);
+        buf[offset + 1] = (byte)((value >> 8) & 0xFF);
+        buf[offset + 2] = (byte)((value >> 16) & 0xFF);
+        buf[offset + 3] = (byte)((value >> 24) & 0xFF);
     }
 
     private static void WriteInt32(byte[] buf, int offset, int value)
