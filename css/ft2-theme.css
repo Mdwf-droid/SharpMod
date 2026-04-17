@@ -1,0 +1,651 @@
+﻿/* ═══════════════════════════════════════════════════
+   FASTTRACKER II – DARK BLUE-GRAY THEME  v6
+   + Panel Positions
+   ═══════════════════════════════════════════════════ */
+
+:root {
+    /* ── FT2 Palette ── */
+    --ft2-bg: #0B0E14;
+    --ft2-panel: #1A1F2E;
+    --ft2-panel-light: #252D40;
+    --ft2-panel-dark: #0A0D12;
+    --ft2-highlight: #2E3A52;
+    --ft2-shadow: #06080C;
+    --ft2-text: #B8C0D0;
+    --ft2-text-dim: #556078;
+    --ft2-text-bright: #E0E8F0;
+    --ft2-accent: #4878B8;
+    --ft2-accent-light: #6898D8;
+    --ft2-accent-glow: #5888C8;
+    /* ── Pattern Colors ── */
+    --ft2-note: #C0D8E8;
+    --ft2-instrument: #90C848;
+    --ft2-volume: #50A850;
+    --ft2-effect: #C8A848;
+    --ft2-effect-data: #C89048;
+    --ft2-row-num: #506878;
+    --ft2-row-active: #182848;
+    --ft2-row-bar: #111A28;
+    --ft2-cursor: #3060A0;
+    /* ── VU / Scope ── */
+    --ft2-vu-green: #40C040;
+    --ft2-vu-yellow: #C0C040;
+    --ft2-vu-red: #C04040;
+    --ft2-scope-green: #40B040;
+    /* ── Sizes ── */
+    --ft2-row-height: 14px;
+    --ft2-font-size: 11px;
+    --ft2-header-h: 28px;
+    --ft2-gap: 2px;
+    --ft2-radius: 3px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--ft2-bg);
+    color: var(--ft2-text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: var(--ft2-font-size);
+    line-height: var(--ft2-row-height);
+    -webkit-font-smoothing: antialiased;
+}
+
+.ft2-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    color: var(--ft2-text-dim);
+    font-size: 14px;
+}
+
+/* ══════════════════════════════
+   PANELS
+   ══════════════════════════════ */
+.ft2-panel {
+    background: var(--ft2-panel);
+    border: 1px solid var(--ft2-highlight);
+    border-radius: var(--ft2-radius);
+}
+
+.ft2-panel-inset {
+    background: var(--ft2-bg);
+    border: 1px solid var(--ft2-shadow);
+    border-radius: var(--ft2-radius);
+}
+
+/* ══════════════════════════════
+   BUTTONS
+   ══════════════════════════════ */
+.ft2-btn {
+    background: linear-gradient(180deg, #2E3650 0%, #222838 100%);
+    border: 1px solid var(--ft2-highlight);
+    border-radius: var(--ft2-radius);
+    color: var(--ft2-text);
+    font-family: inherit;
+    font-size: var(--ft2-font-size);
+    padding: 3px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.1s ease;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+}
+
+    .ft2-btn:hover {
+        background: linear-gradient(180deg, #384868 0%, #2E3650 100%);
+        border-color: var(--ft2-accent);
+        color: var(--ft2-text-bright);
+    }
+
+    .ft2-btn:active {
+        background: linear-gradient(180deg, #1A2030 0%, #2E3650 100%);
+        transform: translateY(1px);
+    }
+
+    .ft2-btn.active {
+        background: linear-gradient(180deg, var(--ft2-accent) 0%, #3060A0 100%);
+        border-color: var(--ft2-accent-light);
+        color: #fff;
+        box-shadow: 0 0 8px rgba(72, 120, 184, 0.4);
+    }
+
+.ft2-btn-play {
+    color: var(--ft2-vu-green);
+}
+
+.ft2-btn-stop {
+    color: var(--ft2-vu-red);
+}
+
+.ft2-btn-pause {
+    color: var(--ft2-vu-yellow);
+}
+
+.ft2-btn-play.active {
+    background: linear-gradient(180deg, #2A6030 0%, #1A4020 100%);
+    border-color: var(--ft2-vu-green);
+}
+
+.ft2-btn-stop.active {
+    background: linear-gradient(180deg, #603030 0%, #402020 100%);
+    border-color: var(--ft2-vu-red);
+}
+
+/* ══════════════════════════════
+   LAYOUT
+   ══════════════════════════════ */
+.ft2-screen {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    gap: var(--ft2-gap);
+    padding: var(--ft2-gap);
+}
+
+/* ── Title Bar ── */
+.ft2-titlebar {
+    height: var(--ft2-header-h);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 12px;
+}
+
+    .ft2-titlebar .logo {
+        color: var(--ft2-accent-light);
+        font-size: 13px;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    .ft2-titlebar .subtitle {
+        color: var(--ft2-text-dim);
+        font-size: 10px;
+        flex: 1;
+    }
+
+/* ── Top Section : Song Info | Positions | Spectrum | Instruments ── */
+.ft2-top {
+    display: flex;
+    gap: var(--ft2-gap);
+    height: 140px;
+    flex-shrink: 0;
+}
+
+/* Song Info (left) */
+.ft2-song-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ft2-gap);
+}
+
+.ft2-info-grid {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    gap: 1px 6px;
+    padding: 4px 8px;
+    font-size: 10px;
+}
+
+    .ft2-info-grid .label {
+        color: var(--ft2-text-dim);
+        text-align: right;
+    }
+
+    .ft2-info-grid .value {
+        color: var(--ft2-text-bright);
+    }
+
+.ft2-transport {
+    display: flex;
+    gap: 3px;
+    padding: 3px;
+}
+
+/* ── Positions Panel ── */
+.ft2-positions-panel {
+    width: 120px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+    .ft2-positions-panel .panel-title {
+        height: 16px;
+        line-height: 16px;
+        text-align: center;
+        color: var(--ft2-accent-light);
+        font-size: 9px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        flex-shrink: 0;
+    }
+
+.ft2-positions-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    gap: 2px;
+    padding: 0 2px;
+}
+
+.ft2-pos-header {
+    padding: 2px 4px;
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.ft2-pos-row {
+    display: flex;
+    gap: 4px;
+}
+
+.ft2-pos-label {
+    color: var(--ft2-text-dim);
+    min-width: 24px;
+}
+
+.ft2-pos-value {
+    color: var(--ft2-text-bright);
+}
+
+.ft2-pos-list {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 10px;
+    line-height: 14px;
+    padding: 1px;
+}
+
+.ft2-pos-entry {
+    display: flex;
+    gap: 2px;
+    padding: 0 4px;
+    height: 13px;
+    line-height: 13px;
+    color: var(--ft2-text-dim);
+    white-space: nowrap;
+}
+
+    .ft2-pos-entry:hover {
+        background: var(--ft2-row-active);
+        border-radius: 2px;
+    }
+
+    .ft2-pos-entry.active {
+        background: #1A2540;
+        color: #FFD040;
+    }
+
+.ft2-pos-idx {
+    min-width: 16px;
+    color: var(--ft2-row-num);
+}
+
+.ft2-pos-sep {
+    color: var(--ft2-shadow);
+}
+
+.ft2-pos-pat {
+    color: var(--ft2-text);
+}
+
+.ft2-pos-entry.active .ft2-pos-idx,
+.ft2-pos-entry.active .ft2-pos-sep,
+.ft2-pos-entry.active .ft2-pos-pat {
+    color: #FFD040;
+}
+
+/* ── FFT Spectrum Panel ── */
+.ft2-fft-panel {
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+    .ft2-fft-panel .panel-title {
+        height: 16px;
+        line-height: 16px;
+        text-align: center;
+        color: var(--ft2-accent-light);
+        font-size: 9px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+.ft2-fft-canvas-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+}
+
+    .ft2-fft-canvas-wrap canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        border-radius: 2px;
+    }
+
+/* ── Instrument Panel ── */
+.ft2-instrument-panel {
+    width: 240px;
+    display: flex;
+    flex-direction: column;
+}
+
+    .ft2-instrument-panel .panel-title {
+        height: 16px;
+        line-height: 16px;
+        text-align: center;
+        color: var(--ft2-accent-light);
+        font-size: 9px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+.ft2-inst-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1px;
+}
+
+.ft2-inst-row {
+    display: flex;
+    gap: 4px;
+    height: 13px;
+    line-height: 13px;
+    padding: 0 4px;
+    font-size: 10px;
+}
+
+    .ft2-inst-row:hover {
+        background: var(--ft2-row-active);
+        border-radius: 2px;
+    }
+
+    .ft2-inst-row .num {
+        color: var(--ft2-row-num);
+        width: 20px;
+        text-align: right;
+    }
+
+    .ft2-inst-row .name {
+        color: var(--ft2-text);
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+/* ══════════════════════════════
+   SCOPES + VU
+   ══════════════════════════════ */
+.ft2-scopes-row {
+    height: 52px;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+    .ft2-scopes-row canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        border-radius: 2px;
+        transition: none;
+    }
+
+.ft2-vu-col {
+    width: 6px;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 1px;
+}
+
+.ft2-vu-seg {
+    flex: 1;
+    border-radius: 1px;
+    min-height: 2px;
+}
+
+    .ft2-vu-seg.off {
+        background: #0E1218;
+    }
+
+    .ft2-vu-seg.green {
+        background: var(--ft2-vu-green);
+        box-shadow: 0 0 3px rgba(64, 192, 64, 0.4);
+    }
+
+    .ft2-vu-seg.yellow {
+        background: var(--ft2-vu-yellow);
+        box-shadow: 0 0 3px rgba(192, 192, 64, 0.4);
+    }
+
+    .ft2-vu-seg.red {
+        background: var(--ft2-vu-red);
+        box-shadow: 0 0 3px rgba(192, 64, 64, 0.5);
+    }
+
+/* ══════════════════════════════
+   PATTERN EDITOR
+   ══════════════════════════════ */
+.ft2-pattern-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.ft2-chan-headers {
+    display: flex;
+    height: 16px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.ft2-chan-header-rownum {
+    width: 26px;
+    flex-shrink: 0;
+}
+
+.ft2-chan-headers-inner {
+    display: flex;
+    flex: 1;
+    min-width: max-content;
+    transition: none;
+}
+
+.ft2-chan-header {
+    min-width: 116px;
+    flex: 1;
+    text-align: center;
+    color: var(--ft2-accent-light);
+    font-size: 9px;
+    line-height: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.ft2-pattern-grid-wrapper {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    min-height: 0;
+}
+
+.ft2-pattern-grid {
+    position: absolute;
+    inset: 0;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+.ft2-pattern-grid-inner {
+    min-width: max-content;
+}
+
+.ft2-row {
+    display: flex;
+    height: var(--ft2-row-height);
+    line-height: var(--ft2-row-height);
+    white-space: nowrap;
+    position: relative;
+}
+
+    .ft2-row.active {
+        background: var(--ft2-row-active);
+    }
+
+    .ft2-row.bar {
+        background: var(--ft2-row-bar);
+    }
+
+    .ft2-row .row-num {
+        width: 26px;
+        text-align: right;
+        padding-right: 3px;
+        color: var(--ft2-row-num);
+        flex-shrink: 0;
+        font-size: 10px;
+    }
+
+    .ft2-row.active .row-num {
+        color: var(--ft2-accent-light);
+        font-weight: bold;
+    }
+
+    .ft2-row.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 2px;
+        height: 100%;
+        background: var(--ft2-accent-light);
+        border-radius: 1px;
+    }
+
+.ft2-cell {
+    display: inline-flex;
+    gap: 0;
+    min-width: 116px;
+    flex: 1;
+    padding: 0 3px;
+    border-right: 1px solid rgba(30, 36, 51, 0.6);
+    overflow: hidden;
+}
+
+    .ft2-cell .note {
+        color: var(--ft2-note);
+        width: 3ch;
+        flex-shrink: 0;
+    }
+
+    .ft2-cell .inst {
+        color: var(--ft2-instrument);
+        width: 3ch;
+        flex-shrink: 0;
+        display: inline-block;
+        overflow: hidden;
+    }
+
+    .ft2-cell .vol {
+        color: var(--ft2-volume);
+        width: 2ch;
+        flex-shrink: 0;
+    }
+
+    .ft2-cell .fx {
+        color: var(--ft2-effect);
+        width: 1ch;
+        flex-shrink: 0;
+    }
+
+    .ft2-cell .fxd {
+        color: var(--ft2-effect-data);
+        width: 2ch;
+        flex-shrink: 0;
+    }
+
+    .ft2-cell .sep {
+        width: 0.6ch;
+        flex-shrink: 0;
+    }
+
+    .ft2-cell .note,
+    .ft2-cell .inst,
+    .ft2-cell .vol,
+    .ft2-cell .fx,
+    .ft2-cell .fxd,
+    .ft2-cell .sep {
+        display: inline-block;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+/* ── Scrollbar commune (pattern + instruments + positions) ── */
+.ft2-pattern-grid::-webkit-scrollbar,
+.ft2-inst-list::-webkit-scrollbar,
+.ft2-pos-list::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.ft2-pattern-grid::-webkit-scrollbar-track,
+.ft2-inst-list::-webkit-scrollbar-track,
+.ft2-pos-list::-webkit-scrollbar-track {
+    background: var(--ft2-panel-dark);
+}
+
+.ft2-pattern-grid::-webkit-scrollbar-thumb,
+.ft2-inst-list::-webkit-scrollbar-thumb,
+.ft2-pos-list::-webkit-scrollbar-thumb {
+    background: var(--ft2-highlight);
+    border-radius: 3px;
+}
+
+    .ft2-pattern-grid::-webkit-scrollbar-thumb:hover,
+    .ft2-inst-list::-webkit-scrollbar-thumb:hover,
+    .ft2-pos-list::-webkit-scrollbar-thumb:hover {
+        background: var(--ft2-accent);
+    }
+
+/* ── Status Bar ── */
+.ft2-statusbar {
+    height: 18px;
+    line-height: 18px;
+    padding: 0 8px;
+    display: flex;
+    justify-content: space-between;
+    color: var(--ft2-text-dim);
+    font-size: 9px;
+}
+
+/* ── Drop zone ── */
+.ft2-dropzone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    color: var(--ft2-text-dim);
+    font-size: 13px;
+}
+
