@@ -46,34 +46,7 @@ namespace SharpMod
         ///</summary>
         public IRenderer SoundRenderer { get; set; }
 
-        private AudioProcessor _dspAudioProcessor;
-        ///<summary>
-        ///</summary>
-        public AudioProcessor DspAudioProcessor
-        {
-            get { return _dspAudioProcessor; }
-            set
-            {
-                _dspAudioProcessor = value;
-                if (_dspAudioProcessor != null)
-                {
-                    _dspAudioProcessor.initializeProcessor(ChannelsMixer);
-                    ChannelsMixer._audioProcessor = _dspAudioProcessor;
-
-                }
-            }
-        }
-        /*private DMode _mode;
-        public DMode Mode
-        {
-            get { return _mode; }
-            set
-            {
-                _mode = value;
-                
-                ChannelsMixer._dMode = _mode;
-            }
-        }*/
+       
         private MixConfig _mixCfg;
         ///<summary>
         ///</summary>

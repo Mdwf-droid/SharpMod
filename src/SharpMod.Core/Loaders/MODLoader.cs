@@ -261,11 +261,12 @@ namespace SharpMod.Loaders
 		{
 			int t, s = 0;
 
-            this._module.Patterns = new System.Collections.Generic.List<Pattern>(patternsCount);
-			
-			
-			// Allocate temporary buffer for loading and converting the patterns
-			patbuf = new MODNOTE[64 * this._module.ChannelsCount];
+            //this._module.Patterns = new System.Collections.Generic.List<Pattern>(patternsCount);
+            _module.Patterns.Clear();
+
+
+            // Allocate temporary buffer for loading and converting the patterns
+            patbuf = new MODNOTE[64 * this._module.ChannelsCount];
 
             for (t = 0; t < 64 * this._module.ChannelsCount; t++)
 			{
@@ -360,7 +361,8 @@ namespace SharpMod.Loaders
                 // make a cstr this.UniModule songname
                 this._module.SongName = mh.songname;
                 // copy the songlength
-                this._module.Positions = new System.Collections.Generic.List<int>(mh.songlength);
+                //this._module.Positions = new System.Collections.Generic.List<int>(mh.songlength);
+                _module.Positions.Clear();
 				
 				// copy the position array
 				for (int t = 0; t < 128; t++)
@@ -409,7 +411,7 @@ namespace SharpMod.Loaders
                     this._module.Instruments[inst_num].InsName = mh.samples[smpinfo_num].samplename;
 					
 					//init the sampleinfo variables and convert the size pointers to longword format
-                    this._module.Instruments[inst_num].Samples[0].C2Spd = Helper.FineTune[mh.samples[smpinfo_num].finetune & 0xf];
+                    this._module.Instruments[inst_num].Samples[0].C2Spd = ModConstants.FineTune[mh.samples[smpinfo_num].finetune & 0xf];
                     this._module.Instruments[inst_num].Samples[0].Volume = mh.samples[smpinfo_num].volume;
                     this._module.Instruments[inst_num].Samples[0].LoopStart = (int)mh.samples[smpinfo_num].reppos << 1;
                     this._module.Instruments[inst_num].Samples[0].LoopEnd = this._module.Instruments[inst_num].Samples[0].LoopStart + ((int)mh.samples[smpinfo_num].replen << 1);

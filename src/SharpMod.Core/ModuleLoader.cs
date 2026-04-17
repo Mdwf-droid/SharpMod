@@ -12,7 +12,7 @@ namespace SharpMod
 {
     ///<summary>
     ///</summary>
-    public class ModuleLoader
+    public class ModuleLoader : IModuleLoader
     {
         private ILoader _currentLoader;
         private ModBinaryReader _reader;
@@ -24,22 +24,7 @@ namespace SharpMod
         ///</summary>
         public List<ILoader> Loaders { get; private set; }
 
-        #region Singleton definition
-        private static ModuleLoader _instance;
-        /// <summary>
-        /// Singleton definition of the ModuleLoader
-        /// </summary>
-        public static ModuleLoader Instance
-        {
-            get
-            {
-                if (_instance == null)
-                    _instance = new ModuleLoader();
-
-                return _instance;
-            }
-        }
-        #endregion
+        public static ModuleLoader Instance { get; } = new ModuleLoader();
 
         /// <summary>
         /// Private constructor
@@ -122,6 +107,11 @@ namespace SharpMod
             {
                 throw e;
             }
+        }
+
+        public SongModule LoadModule(string name, Stream stream)
+        {
+            return LoadModule(stream);
         }
 
         /// <summary>
@@ -313,7 +303,8 @@ namespace SharpMod
         /// <returns></returns>
         public bool AllocInstruments(SongModule module, int nbInstruments)
         {
-            module.Instruments = new List<Instrument>(nbInstruments);
+            //module.Instruments = new List<Instrument>(nbInstruments);
+            module.Instruments.Clear();
             for (var i = 0; i < nbInstruments; i++)
             {
                 module.Instruments.Add(new Instrument());
@@ -399,8 +390,8 @@ namespace SharpMod
         {
             // Allocate track sequencing array
             //module.Patterns = new List<Pattern>(numPat);
-            if (module.Patterns == null)
-                module.Patterns = [];
+            /*if (module.Patterns == null)
+                module.Patterns = [];*/
 
             if (module.Patterns.Count <= numPat)
                 module.Patterns.Add(new Pattern(rowsCount));
@@ -434,5 +425,7 @@ namespace SharpMod
 
             return true;
         }
+
+      
     }
 }

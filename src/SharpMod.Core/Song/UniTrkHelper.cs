@@ -46,7 +46,7 @@ namespace SharpMod.Song
                         trk.UniNote((short)(pc.Period));
 
                     if (pc.Effect > 0)
-                        trk.UniPTEffect((short)(pc.Effect /*- 3*/), pc.EffectData);
+                        trk.UniPTEffect((short)(pc.Effect /*- 3*/), (short)pc.EffectData);
 
                     trk.UniNewline();
 
@@ -115,7 +115,8 @@ namespace SharpMod.Song
                         }
                     }
 
-                    PatternCell pc = new PatternCell(track)
+                    //PatternCell pc = new PatternCell(track)
+                    PatternCell pc = new PatternCell()
                     {
                         Period = (short)note,
                         Note = RealNote,

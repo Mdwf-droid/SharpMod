@@ -5,12 +5,13 @@ using System.Text;
 using SharpMod.UniTracker;
 using SharpMod.Exceptions;
 using SharpMod.Song;
+using SharpMod.Player;
 
 namespace SharpMod.Loaders
 {
     public class M15Loader: ILoader
     {
-        private readonly short[] M15_npertab = [1712, 1616, 1524, 1440, 1356, 1280, 1208, 1140, 1076, 1016, 960, 906, 856, 808, 762, 720, 678, 640, 604, 570, 538, 508, 480, 453, 428, 404, 381, 360, 339, 320, 302, 285, 269, 254, 240, 226, 214, 202, 190, 180, 170, 160, 151, 143, 135, 127, 120, 113, 107, 101, 95, 90, 85, 80, 75, 71, 67, 63, 60, 56];
+       
 
         // raw as-is module header
         private M15_MODULEHEADER mh; 
@@ -67,7 +68,7 @@ namespace SharpMod.Loaders
             {
                 for (note = 0; note < 60; note++)
                 {
-                    if (period >= M15_npertab[note])
+                    if (period >= SharpModPlayer.NotePeriodTable[note])
                         break;
                 }
                 note++;
@@ -117,7 +118,8 @@ namespace SharpMod.Loaders
         {
             int s = 0;
 
-            this._module.Patterns = new System.Collections.Generic.List<Pattern>(patternsCount);
+            _module.Patterns.Clear();
+            //this._module.Patterns = new System.Collections.Generic.List<Pattern>(patternsCount);
 
             // Allocate temporary buffer for loading and converting the patterns                        
             patbuf = new M15_MODNOTE[64 * this._module.ChannelsCount];
@@ -287,7 +289,7 @@ namespace SharpMod.Loaders
                 this._module.Instruments[inst_num].InsName = mh.samples[smpinfo_num].samplename;
 
                 // init the sampleinfo variables and convert the size pointers to longword format
-                this._module.Instruments[inst_num].Samples[0].C2Spd = Helper.FineTune[mh.samples[smpinfo_num].finetune & 0xf];
+                this._module.Instruments[inst_num].Samples[0].C2Spd = ModConstants.FineTune[mh.samples[smpinfo_num].finetune & 0xf];
                 this._module.Instruments[inst_num].Samples[0].Volume = mh.samples[smpinfo_num].volume;
                 this._module.Instruments[inst_num].Samples[0].LoopStart = mh.samples[smpinfo_num].reppos;
                 this._module.Instruments[inst_num].Samples[0].LoopEnd = this._module.Instruments[inst_num].Samples[0].LoopStart + ((int)mh.samples[smpinfo_num].replen << 1);

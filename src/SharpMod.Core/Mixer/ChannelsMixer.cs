@@ -306,37 +306,29 @@ namespace SharpMod.Mixer
         }
 
 
+        // ★ AJOUTER comme champ de classe dans ChannelsMixer :
+        private short[] _16BitTempBuffer;
+
+        // ★ REMPLACER VC_Sample32To16Copy :
         protected internal virtual void VC_Sample32To16Copy(int[] srce, sbyte[] dest, int dest_offset, int count, short shift)
         {
-            int c;
             int shifti = (16 - ampshift);
-            int src_idx = 0, dest_idx = dest_offset;
 
-            while (count-- > 0)
+            // Allouer/réutiliser le buffer temp
+            if (_16BitTempBuffer == null || _16BitTempBuffer.Length < count)
+                _16BitTempBuffer = new short[count];
+
+            // Clip + convert en short[]
+            for (int i = 0; i < count; i++)
             {
-                c = srce[src_idx] >> shifti;
-                if (c > 32767)
-                    c = 32767;
-                else if (c < -32768)
-                    c = -32768;
-                //#ifdef MM_BIG_ENDIAN
-                //                dest[dest_idx++]=(c>>8)&0xFF;
-                //                dest[dest_idx++]=c&0xFF;
-                //#else
-                if (BitConverter.IsLittleEndian)
-                {
-                    dest[dest_idx++] = (sbyte)(c & 0xFF);
-                    dest[dest_idx++] = (sbyte)((c >> 8) & 0xFF);
-                }
-                else
-                {
-                    dest[dest_idx++] = (sbyte)((c >> 8) & 0xFF);
-                    dest[dest_idx++] = (sbyte)(c & 0xFF);
-                }
-
-                //#endif
-                src_idx++;
+                int c = srce[i] >> shifti;
+                if (c > 32767) c = 32767;
+                else if (c < -32768) c = -32768;
+                _16BitTempBuffer[i] = (short)c;
             }
+
+            // Copie block : short[] → sbyte[] (même mémoire binaire)
+            Buffer.BlockCopy(_16BitTempBuffer, 0, dest, dest_offset, count * 2);
         }
 
         /// <summary>
@@ -763,6 +755,7 @@ namespace SharpMod.Mixer
 
             // ══ OPTIM v6 : Hoister le sample lookup AVANT la boucle ══
             byte[] sample = this.WaveTable.Samples[vnf.Handle];
+            //byte[] sample = this.WaveTable.GetSample(vnf.Handle);
             if (sample == null)
             {
                 vnf.Current = 0;
@@ -894,21 +887,6 @@ namespace SharpMod.Mixer
             if (this.MixCfg.Reverb > 0)
                 MixReverb_Stereo(VC_TICKBUF, todo);
 
-            // ══ v7.1 OPTIM : Réutiliser le buffer DSP pré-alloué ══
-            if (_audioProcessor != null)
-            {
-                int dspLen = todo << 1;
-                // S'assurer que le buffer est assez grand
-                if (_dspOutputBuffer == null || _dspOutputBuffer.Length < dspLen)
-                    _dspOutputBuffer = new int[dspLen];
-
-                int shift = 16 - ampshift;
-                for (int i = 0; i < dspLen; i++)
-                    _dspOutputBuffer[i] = VC_TICKBUF[i] >> shift;
-
-                _audioProcessor.writeSampleData(_dspOutputBuffer, 0, dspLen);
-                _audioProcessor.Run();
-            }
 
             if (this.MixCfg.Is16Bits)
                 VC_Sample32To16Copy(VC_TICKBUF, buf, buf_offset,

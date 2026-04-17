@@ -470,7 +470,8 @@ namespace SharpMod.Loaders
                     this._module.Flags |= UniModFlags.UF_LINEAR;
 
                 //memcpy(this.UniModule.positions,mh.orders,256);po
-                _module.Positions = new System.Collections.Generic.List<int>(mh.songlength);
+                //_module.Positions = new System.Collections.Generic.List<int>(mh.songlength);
+                _module.Positions.Clear();
                 for (t = 0; t < 256; t++)
                     if (t >= mh.songlength)
                         break;

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace SharpMod
@@ -9,46 +10,75 @@ namespace SharpMod
     public class WaveTable
     {
         /// <summary>
-        /// Table of samples bytes with handle as key
+        /// Raw sample data indexed by handle.
+        /// Internal car le mixer y accède directement pour la perf.
         /// </summary>
-        public byte[][] Samples { get; set; }
+        internal byte[][] Samples;
 
-        ///<summary>
-        ///</summary>
-        public WaveTable()
+        private List<byte[]> sampleList = new List<byte[]>();
+
+        /// <summary>
+        /// Nombre de samples chargés.
+        /// </summary>
+        public int Count => sampleList.Count;
+
+        public WaveTable(int maxHandles = 128)
         {
-            Samples = [];
+            Samples = new byte[maxHandles][];
         }
 
         /// <summary>
-        /// Get Sample in the Wave table by his key
+        /// Récupérer un sample brut par handle, avec bounds check.
+        /// Retourne null si le handle est invalide.
         /// </summary>
-        /// <param name="handle">Handle of the sample in the table</param>
-        /// <returns>array of byte of the sample if found or null </returns>
         public byte[] GetSample(int handle)
         {
-            byte[] toReturn = null;
-
-            if(handle < Samples.Length)            
-                toReturn = Samples[handle];
-
-            return toReturn;
+            if (handle < 0 || handle >= Samples.Length)
+                return null;
+            return Samples[handle];
         }
 
         /// <summary>
-        /// Add a sample array of bytes in the wave table
-        /// if the handle exist, replace old sample with the new
+        /// Récupérer un sample brut par handle.
+        /// Lève une exception si le handle est invalide.
         /// </summary>
-        /// <param name="sampleBytes">Array of byte of the sample to add</param>
-        /// <param name="handle">Handle of the sample in the wave table</param>
+        /// <exception cref="ArgumentOutOfRangeException"/>
+        public byte[] GetSampleChecked(int handle)
+        {
+            if (handle < 0 || handle >= Samples.Length)
+                throw new ArgumentOutOfRangeException(nameof(handle),
+                    $"Sample handle {handle} is out of range [0, {Samples.Length - 1}]");
+            return Samples[handle]
+                ?? throw new InvalidOperationException(
+                    $"Sample handle {handle} has no data loaded");
+        }
+
+        /// <summary>
+        /// Taille d'un sample en bytes. 0 si le handle est invalide.
+        /// </summary>
+        public int GetSampleLength(int handle)
+        {
+            var s = GetSample(handle);
+            return s?.Length ?? 0;
+        }
+
+        /// <summary>
+        /// Vérifier qu'un handle est valide et a des données.
+        /// </summary>
+        public bool IsValidHandle(int handle)
+        {
+            return handle >= 0
+                && handle < Samples.Length
+                && Samples[handle] != null
+                && Samples[handle].Length > 0;
+        }
+
+        // ═══ Méthodes existantes (garder telles quelles) ═══
+
         public void AddSample(byte[] sampleBytes, int handle)
         {
-            var tmp = new List<byte[]>(Samples)
-            {
-                sampleBytes
-            };
-
-            Samples = [.. tmp];
+            sampleList.Add(sampleBytes);
+            Samples[handle] = sampleBytes;
         }
 
         ///<summary>
